@@ -256,6 +256,93 @@ input {
   gap: 0.9rem;
 }
 
+.yugioh-data-hero {
+  grid-template-columns: 1.2fr 0.8fr;
+}
+
+.yugioh-dashboard-grid {
+  grid-template-columns: 0.8fr 1.2fr;
+}
+
+.yugioh-source-panel {
+  display: grid;
+  gap: 0.9rem;
+  align-content: start;
+}
+
+.yugioh-selected-theme {
+  margin-top: 0.8rem;
+  align-items: center;
+}
+
+.yugioh-source-block {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.9rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(223, 193, 126, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.yugioh-source-row {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.yugioh-source-row small {
+  color: var(--muted);
+}
+
+.yugioh-archetype-item {
+  grid-template-columns: 1fr;
+  text-align: left;
+}
+
+.yugioh-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin-top: 0.8rem;
+}
+
+.yugioh-card-record {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 0.9rem;
+  align-items: start;
+}
+
+.yugioh-card-thumb {
+  width: 96px;
+  height: 140px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: #11181d;
+}
+
+.yugioh-card-copy {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.yugioh-card-description {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.yugioh-card-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.8rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
 .hero-panel,
 .panel {
   border: 1px solid var(--panel-border);
@@ -881,7 +968,11 @@ input {
   .dashboard-grid,
   .hero-panel,
   .launcher-grid,
-  .yugioh-panel-grid {
+  .yugioh-panel-grid,
+  .yugioh-data-hero,
+  .yugioh-dashboard-grid,
+  .yugioh-card-grid,
+  .yugioh-card-record {
     grid-template-columns: 1fr;
   }
 
