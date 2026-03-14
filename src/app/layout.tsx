@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
 
 import "@/app/globals.css";
+import { AppHeader } from "@/components/shell/app-header";
 
 const headingFont = Cormorant_Garamond({
   variable: "--font-heading",
@@ -16,8 +17,8 @@ const bodyFont = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "Magic the Gathering Helper",
-  description: "Commander-first deck builder with meta-backed recommendations and printable proxy sheets.",
+  title: "Card Lab",
+  description: "Dual-game deck building platform for MTG Commander and Yu-Gi-Oh playtest workflows.",
 };
 
 export default function RootLayout({
@@ -27,7 +28,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${headingFont.variable} ${bodyFont.variable}`}>{children}</body>
+      <body className={`${headingFont.variable} ${bodyFont.variable}`}>
+        <AppHeader />
+        {children}
+      </body>
     </html>
   );
 }

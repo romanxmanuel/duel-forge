@@ -11,7 +11,7 @@ import type {
   TagOption,
 } from "@/lib/mtg/types";
 
-type DeckStoreState = {
+type MtgStoreState = {
   selectedCommander: CommanderOption | null;
   focusTag: TagOption | null;
   powerPreset: PowerPreset;
@@ -34,7 +34,7 @@ type DeckStoreState = {
   clearDeck: () => void;
 };
 
-export const useDeckStore = create<DeckStoreState>()(
+export const useMtgStore = create<MtgStoreState>()(
   persist(
     (set) => ({
       selectedCommander: null,

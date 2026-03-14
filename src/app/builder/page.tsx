@@ -1,8 +1,5 @@
-import { DeckBuilderApp } from "@/components/deck-builder/deck-builder-app";
-import { fetchCommanderBannedList } from "@/lib/mtg/wizards";
+import { redirect } from "next/navigation";
 
-export default async function BuilderPage() {
-  const bannedList = await fetchCommanderBannedList();
-
-  return <DeckBuilderApp initialBannedList={bannedList} />;
+export default function LegacyBuilderPage() {
+  redirect("/mtg");
 }

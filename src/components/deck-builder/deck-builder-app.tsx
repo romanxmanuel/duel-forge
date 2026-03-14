@@ -17,7 +17,7 @@ import type {
   SpellbookDeckEstimate,
   TagOption,
 } from "@/lib/mtg/types";
-import { useDeckStore } from "@/store/deck-store";
+import { useMtgStore } from "@/store/mtg-store";
 
 type DeckBuilderAppProps = {
   initialBannedList: string[];
@@ -93,7 +93,7 @@ export function DeckBuilderApp({ initialBannedList }: DeckBuilderAppProps) {
     addCard,
     removeCard,
     clearDeck,
-  } = useDeckStore();
+  } = useMtgStore();
 
   const [selectedColors, setSelectedColors] = useState<ManaColor[]>(selectedCommander?.colorIdentity ?? []);
   const [commanderQuery, setCommanderQuery] = useState(selectedCommander?.name ?? "");
@@ -659,7 +659,7 @@ export function DeckBuilderApp({ initialBannedList }: DeckBuilderAppProps) {
               <p className="panel-kicker">Step 3</p>
               <h2>Deck shell</h2>
             </div>
-            <Link href="/print" className="ghost-button">
+            <Link href="/mtg/print" className="ghost-button">
               Open print sheet
             </Link>
           </div>
