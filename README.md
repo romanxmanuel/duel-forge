@@ -51,6 +51,7 @@ The Yu-Gi-Oh side is currently a documented architecture and product plan, not a
 - [Types and API Contracts](docs/types-and-api.md)
 - [Scoring Model](docs/scoring-model.md)
 - [Implementation Backlog](docs/implementation-backlog.md)
+- [Phase 1 Shell Plan](docs/phase-1-shell-plan.md)
 - [Printing](docs/printing.md)
 - [Meta Pipeline](docs/meta-pipeline.md)
 - [Yu-Gi-Oh Product Overview](docs/yugioh-overview.md)
