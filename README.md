@@ -14,6 +14,13 @@ Magic the Gathering Helper is built for Commander players who want to:
 
 The app is designed to stay lightweight enough for Vercel while still pulling from strong free data sources across the Commander ecosystem.
 
+This repository is also being planned as a dual-product site:
+
+- `MTG Commander Lab`
+- `Yu-Gi-Oh Duel Forge`
+
+The Yu-Gi-Oh side is currently a documented architecture and product plan, not a shipped feature.
+
 ## Features
 
 - Commander-only deck building flow
@@ -35,6 +42,15 @@ The app is designed to stay lightweight enough for Vercel while still pulling fr
   Combo-aware signals and full-deck pressure estimation
 - `Wizards of the Coast`
   Official Commander banned-list source
+
+## Documentation
+
+- [Architecture](docs/architecture.md)
+- [Data Sources](docs/data-sources.md)
+- [Deck Generation](docs/deck-generation.md)
+- [Printing](docs/printing.md)
+- [Meta Pipeline](docs/meta-pipeline.md)
+- [Yu-Gi-Oh Product Overview](docs/yugioh-overview.md)
 
 ## Stack
 
@@ -65,6 +81,7 @@ npm run build
 - Deck state is persisted in the browser for a lightweight first version.
 - The current build is focused on Commander, not Standard.
 - Proxy sheets are meant for playtesting and customization workflows.
+- The Yu-Gi-Oh expansion is planned in `docs/` and has not been implemented yet.
 
 ## License
 
