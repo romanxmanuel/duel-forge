@@ -786,7 +786,7 @@ export function DeckBuilderApp({ initialBannedList }: DeckBuilderAppProps) {
 
           {selectedCommander ? (
             <div
-              className={`deck-list-shell ${activePreviewCard ? "deck-list-shell-active" : ""}`}
+              className="deck-list-shell"
               onMouseLeave={() => setHoverPreviewCard(null)}
             >
               <div className="deck-section-list">
@@ -894,39 +894,52 @@ export function DeckBuilderApp({ initialBannedList }: DeckBuilderAppProps) {
                 ))}
               </div>
 
-              {activePreviewCard ? (
-                <aside className="deck-preview-panel">
-                  {activePreviewCard.image ? (
-                    <Image
-                      src={activePreviewCard.image}
-                      alt={activePreviewCard.name}
-                      width={320}
-                      height={446}
-                      className="deck-preview-image"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="deck-preview-placeholder">
+              <aside className="deck-preview-panel">
+                {activePreviewCard ? (
+                  <>
+                    {activePreviewCard.image ? (
+                      <Image
+                        src={activePreviewCard.image}
+                        alt={activePreviewCard.name}
+                        width={320}
+                        height={446}
+                        className="deck-preview-image"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="deck-preview-placeholder">
+                        <strong>{activePreviewCard.name}</strong>
+                        <p>{activePreviewCard.typeLine}</p>
+                      </div>
+                    )}
+                    <div className="deck-preview-meta">
                       <strong>{activePreviewCard.name}</strong>
-                      <p>{activePreviewCard.typeLine}</p>
+                      <small>{activePreviewCard.typeLine}</small>
+                      <button
+                        type="button"
+                        className="ghost-button deck-preview-close"
+                        onClick={() => {
+                          setHoverPreviewCard(null);
+                          setPinnedPreviewCard(null);
+                        }}
+                      >
+                        Close preview
+                      </button>
                     </div>
-                  )}
-                  <div className="deck-preview-meta">
-                    <strong>{activePreviewCard.name}</strong>
-                    <small>{activePreviewCard.typeLine}</small>
-                    <button
-                      type="button"
-                      className="ghost-button deck-preview-close"
-                      onClick={() => {
-                        setHoverPreviewCard(null);
-                        setPinnedPreviewCard(null);
-                      }}
-                    >
-                      Close preview
-                    </button>
-                  </div>
-                </aside>
-              ) : null}
+                  </>
+                ) : (
+                  <>
+                    <div className="deck-preview-placeholder deck-preview-placeholder-idle">
+                      <strong>Card preview</strong>
+                      <p>Hover over a card on desktop, or tap one on mobile, to read the full card.</p>
+                    </div>
+                    <div className="deck-preview-meta deck-preview-meta-idle">
+                      <strong>Preview area</strong>
+                      <small>The layout stays locked in place so the deck list does not shift while you browse.</small>
+                    </div>
+                  </>
+                )}
+              </aside>
             </div>
           ) : (
             <p className="empty-copy">The deck list will appear here after you select a commander and build a shell.</p>
