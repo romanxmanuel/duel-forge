@@ -16,6 +16,7 @@ import type {
   YugiohArchetypeSearchResponse,
   YugiohCard,
   YugiohCardRole,
+  YugiohGeneratedDeckResponse,
   YugiohCardSearchResponse,
   YugiohDeckEntry,
   YugiohDeckSection,
@@ -177,6 +178,7 @@ function DeckSectionPanel({
 
 export function YugiohBuilderApp() {
   const {
+    formatMode,
     strengthTarget,
     buildIntent,
     theme,
@@ -184,6 +186,9 @@ export function YugiohBuilderApp() {
     main,
     extra,
     side,
+    buildNotes,
+    sourceAudit,
+    metaSnapshot,
     setStrengthTarget,
     setBuildIntent,
     clearTheme,
@@ -191,6 +196,7 @@ export function YugiohBuilderApp() {
     setResolvedArchetype,
     toggleBossCard,
     toggleConstraint,
+    setGeneratedDeck,
     addCard,
     decrementCard,
     removeCard,
@@ -207,6 +213,7 @@ export function YugiohBuilderApp() {
   const [archetypeAudit, setArchetypeAudit] = useState<SourceAudit[]>([]);
   const [cardAudit, setCardAudit] = useState<SourceAudit[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
   const showArchetypeResults = deferredArchetypeQuery.trim().length >= 2;
   const showCardResults = deferredCardQuery.trim().length >= 2;
   const themeScopedArchetype = searchScope === "theme" ? theme?.resolvedArchetype ?? null : null;
@@ -307,6 +314,46 @@ export function YugiohBuilderApp() {
     }
   }
 
+  async function generateShell() {
+    const activeTheme = theme ?? {
+      query: archetypeQuery.trim(),
+      resolvedArchetype: null,
+      resolvedBossCards: [],
+      resolvedSupportCards: [],
+    };
+    const activeThemeLabel =
+      activeTheme.resolvedArchetype ?? activeTheme.resolvedBossCards[0] ?? activeTheme.query.trim();
+
+    if (!activeThemeLabel) {
+      setErrorMessage("Pick an archetype or anchor a boss card before generating a shell.");
+      return;
+    }
+
+    setErrorMessage(null);
+    setIsGenerating(true);
+
+    try {
+      const generatedDeck = await fetchJson<YugiohGeneratedDeckResponse>("/api/yugioh/deck-generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          theme: activeTheme,
+          buildIntent,
+          strengthTarget,
+          constraints,
+        }),
+      });
+
+      setGeneratedDeck(generatedDeck);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Unable to generate Yu-Gi-Oh shell.");
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
   return (
     <main className="page-shell">
       <section className="hero-panel yugioh-builder-hero">
@@ -336,7 +383,14 @@ export function YugiohBuilderApp() {
             <li>Theme memory with boss-card anchors</li>
             <li>Main / Extra / Side deck composition</li>
             <li>Heuristic structural scoring and warnings</li>
+            <li>Auto-generated shells from live tournament-meta data</li>
           </ul>
+          <div className="tag-row">
+            <button type="button" className="primary-button" onClick={() => void generateShell()} disabled={isGenerating}>
+              {isGenerating ? "Generating shell..." : "Generate strongest shell"}
+            </button>
+            <span className="status-pill">{formatMode === "open-lab" ? "Open Lab" : formatMode}</span>
+          </div>
           {theme ? (
             <div className="yugioh-theme-summary">
               <strong>{theme.resolvedArchetype ?? theme.query ?? "Theme in progress"}</strong>
@@ -621,6 +675,82 @@ export function YugiohBuilderApp() {
             <span className="status-pill">Score {readout.finalScore}</span>
           </div>
 
+          {buildNotes.length > 0 ? (
+            <div className="yugioh-generation-block">
+              <div className="panel-header">
+                <div>
+                  <p className="panel-kicker">Generation notes</p>
+                  <h3>Why this shell looks like this</h3>
+                </div>
+              </div>
+              <div className="yugioh-note-list">
+                {buildNotes.map((note) => (
+                  <article key={note} className="summary-card yugioh-signal-card yugioh-signal-card-neutral">
+                    <p className="empty-copy">{note}</p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {metaSnapshot ? (
+            <div className="yugioh-generation-block">
+              <div className="panel-header">
+                <div>
+                  <p className="panel-kicker">Meta snapshot</p>
+                  <h3>Live field context</h3>
+                </div>
+              </div>
+
+              <div className="summary-grid yugioh-summary-grid">
+                <article className="summary-card">
+                  <span>Matched Decks</span>
+                  <strong>{metaSnapshot.matchedDeckCount}</strong>
+                </article>
+                <article className="summary-card">
+                  <span>Field Sample</span>
+                  <strong>{metaSnapshot.fieldSampleSize}</strong>
+                </article>
+                <article className="summary-card">
+                  <span>Theme Query</span>
+                  <strong>{metaSnapshot.themeQuery}</strong>
+                </article>
+                <article className="summary-card">
+                  <span>Top Field Deck</span>
+                  <strong>{metaSnapshot.topFieldDecks[0]?.name ?? "N/A"}</strong>
+                </article>
+              </div>
+
+              <div className="yugioh-meta-chip-grid">
+                {metaSnapshot.topFieldDecks.map((entry) => (
+                  <article key={entry.name} className="summary-card yugioh-meta-chip">
+                    <strong>{entry.name}</strong>
+                    <small>{entry.count} lists in sample</small>
+                  </article>
+                ))}
+              </div>
+
+              {metaSnapshot.matchedDecks.length > 0 ? (
+                <div className="yugioh-sample-list">
+                  {metaSnapshot.matchedDecks.map((deck) => (
+                    <a
+                      key={deck.deckUrl}
+                      href={deck.deckUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="summary-card yugioh-sample-card"
+                    >
+                      <strong>{deck.deckName}</strong>
+                      <small>
+                        {[deck.tournamentName, deck.placement, deck.submitDateLabel].filter(Boolean).join(" · ")}
+                      </small>
+                    </a>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
           <div className="summary-grid yugioh-summary-grid">
             <article className="summary-card">
               <span>Consistency</span>
@@ -674,6 +804,8 @@ export function YugiohBuilderApp() {
               </article>
             ))}
           </div>
+
+          <SourceAuditBlock sourceAudit={sourceAudit} />
         </div>
 
         <div className="panel deck-panel yugioh-deck-workspace">

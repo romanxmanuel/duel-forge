@@ -125,6 +125,16 @@ function normalizeArchetype(name: string): YugiohArchetype {
   };
 }
 
+function chunkArray<T>(items: T[], chunkSize: number) {
+  const chunks: T[][] = [];
+
+  for (let index = 0; index < items.length; index += chunkSize) {
+    chunks.push(items.slice(index, index + chunkSize));
+  }
+
+  return chunks;
+}
+
 function scoreMatch(value: string, query: string) {
   const loweredValue = value.toLowerCase();
   const loweredQuery = query.toLowerCase();
@@ -209,5 +219,46 @@ export async function searchYugiohCards(query: string, archetype?: string): Prom
         ? `Card search filtered within the ${archetype} archetype using YGOPRODeck card data.`
         : "Card search uses YGOPRODeck's card information endpoint.",
     ),
+  };
+}
+
+export async function lookupYugiohCardsByIds(cardIds: number[]): Promise<{
+  cards: YugiohCard[];
+  sourceAudit: SourceAudit[];
+}> {
+  const uniqueCardIds = [...new Set(cardIds)].filter((cardId) => Number.isFinite(cardId));
+
+  if (uniqueCardIds.length === 0) {
+    return {
+      cards: [],
+      sourceAudit: [],
+    };
+  }
+
+  const chunks = chunkArray(uniqueCardIds, 40);
+  const payloads = await Promise.all(
+    chunks.map(async (chunk) => {
+      const sourceUrl = `${YGOPRODECK_API_ROOT}/cardinfo.php?id=${chunk.join(",")}`;
+      const payload = CardInfoResponseSchema.parse(
+        await fetchYgoprodeck(`/cardinfo.php?id=${chunk.join(",")}`, {
+          next: {
+            revalidate: 60 * 60 * 12,
+          },
+        }),
+      );
+
+      return {
+        cards: payload.data.map(normalizeCard),
+        sourceAudit: buildSourceAudit(
+          sourceUrl,
+          `Hydrated ${chunk.length} Yu-Gi-Oh card records by card ID from YGOPRODeck.`,
+        ),
+      };
+    }),
+  );
+
+  return {
+    cards: payloads.flatMap((payload) => payload.cards),
+    sourceAudit: payloads.flatMap((payload) => payload.sourceAudit),
   };
 }

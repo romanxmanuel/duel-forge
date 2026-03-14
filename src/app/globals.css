@@ -489,6 +489,40 @@ input {
   gap: 0.75rem;
 }
 
+.yugioh-generation-block {
+  display: grid;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.yugioh-note-list,
+.yugioh-sample-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.yugioh-meta-chip-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.yugioh-meta-chip,
+.yugioh-sample-card {
+  padding: 0.95rem;
+}
+
+.yugioh-sample-card {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.yugioh-sample-card:hover,
+.yugioh-sample-card:focus-visible {
+  border-color: rgba(223, 193, 126, 0.28);
+  transform: translateY(-1px);
+}
+
 .yugioh-signal-card {
   padding: 0.95rem;
 }
@@ -1257,7 +1291,8 @@ input {
   .yugioh-card-result,
   .yugioh-deck-grid,
   .yugioh-deck-entry,
-  .yugioh-summary-grid {
+  .yugioh-summary-grid,
+  .yugioh-meta-chip-grid {
     grid-template-columns: 1fr;
   }
 

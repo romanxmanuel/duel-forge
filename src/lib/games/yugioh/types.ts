@@ -86,6 +86,27 @@ export type YugiohMetaTarget = {
   weight: number;
 };
 
+export type YugiohMetaDeckSample = {
+  deckName: string;
+  deckUrl: string;
+  tournamentName: string | null;
+  placement: string | null;
+  submitDateLabel: string | null;
+};
+
+export type YugiohMetaArchetypeStat = {
+  name: string;
+  count: number;
+};
+
+export type YugiohMetaSnapshot = {
+  themeQuery: string;
+  matchedDeckCount: number;
+  fieldSampleSize: number;
+  topFieldDecks: YugiohMetaArchetypeStat[];
+  matchedDecks: YugiohMetaDeckSample[];
+};
+
 export type YugiohStructuralReadout = {
   consistency: number;
   synergy: number;
@@ -105,4 +126,14 @@ export type YugiohCardSearchResponse = {
 export type YugiohArchetypeSearchResponse = {
   archetypes: YugiohArchetype[];
   sourceAudit: SourceAudit[];
+};
+
+export type YugiohGeneratedDeckResponse = {
+  main: YugiohDeckEntry[];
+  extra: YugiohDeckEntry[];
+  side: YugiohDeckEntry[];
+  buildNotes: string[];
+  sourceAudit: SourceAudit[];
+  metaSnapshot: YugiohMetaSnapshot;
+  structuralReadout: YugiohStructuralReadout;
 };
