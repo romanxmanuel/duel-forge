@@ -114,8 +114,11 @@ body {
   align-items: center;
   justify-content: center;
   padding: 0.58rem 0.95rem;
+  border: 0;
   border-radius: 999px;
   color: var(--muted);
+  background: transparent;
+  cursor: pointer;
   transition: transform 160ms ease, color 160ms ease, background 160ms ease;
 }
 
@@ -260,8 +263,16 @@ input {
   grid-template-columns: 1.2fr 0.8fr;
 }
 
+.yugioh-builder-hero {
+  grid-template-columns: 1.08fr 0.92fr;
+}
+
 .yugioh-dashboard-grid {
   grid-template-columns: 0.8fr 1.2fr;
+}
+
+.yugioh-builder-grid {
+  grid-template-columns: 0.95fr 1.05fr;
 }
 
 .yugioh-source-panel {
@@ -270,9 +281,48 @@ input {
   align-content: start;
 }
 
+.yugioh-control-stack,
+.yugioh-deck-workspace {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+}
+
+.yugioh-hero-summary {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+}
+
 .yugioh-selected-theme {
   margin-top: 0.8rem;
   align-items: center;
+}
+
+.yugioh-theme-summary,
+.yugioh-open-lab-note {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem 1.05rem;
+  border: 1px solid rgba(223, 193, 126, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.yugioh-open-lab-note {
+  grid-template-columns: auto 1fr;
+  gap: 0.8rem;
+  align-items: start;
+}
+
+.yugioh-theme-summary small,
+.yugioh-open-lab-note small {
+  color: var(--muted);
+}
+
+.result-item-active {
+  border-color: rgba(223, 193, 126, 0.38);
+  box-shadow: inset 0 0 0 1px rgba(223, 193, 126, 0.18);
 }
 
 .yugioh-source-block {
@@ -299,10 +349,27 @@ input {
   text-align: left;
 }
 
+.yugioh-search-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.yugioh-search-scope {
+  flex: none;
+}
+
 .yugioh-card-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.9rem;
+  margin-top: 0.8rem;
+}
+
+.yugioh-card-result-grid {
+  display: grid;
+  gap: 0.95rem;
   margin-top: 0.8rem;
 }
 
@@ -313,12 +380,31 @@ input {
   align-items: start;
 }
 
+.yugioh-card-result {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.yugioh-card-result-media {
+  display: flex;
+  justify-content: center;
+}
+
 .yugioh-card-thumb {
   width: 96px;
   height: 140px;
   border-radius: 14px;
   object-fit: cover;
   background: #11181d;
+}
+
+.yugioh-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 0.25rem;
 }
 
 .yugioh-card-copy {
@@ -341,6 +427,196 @@ input {
   gap: 0.55rem 0.8rem;
   color: var(--muted);
   font-size: 0.88rem;
+}
+
+.yugioh-result-actions {
+  margin-top: 0.35rem;
+}
+
+.yugioh-choice-grid,
+.yugioh-constraint-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.yugioh-choice-card,
+.yugioh-constraint-card {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem;
+  border: 1px solid rgba(223, 193, 126, 0.14);
+  border-radius: 18px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.03);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.yugioh-choice-card:hover,
+.yugioh-choice-card:focus-visible,
+.yugioh-constraint-card:hover,
+.yugioh-constraint-card:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(223, 193, 126, 0.24);
+}
+
+.yugioh-choice-card small,
+.yugioh-constraint-card small {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.yugioh-choice-card-active,
+.yugioh-constraint-card-active {
+  border-color: rgba(223, 193, 126, 0.64);
+  background:
+    radial-gradient(circle at top right, rgba(201, 164, 90, 0.18), transparent 48%),
+    rgba(255, 255, 255, 0.05);
+}
+
+.yugioh-workspace-grid {
+  grid-template-columns: 0.78fr 1.22fr;
+}
+
+.yugioh-summary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.yugioh-signal-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.yugioh-signal-card {
+  padding: 0.95rem;
+}
+
+.yugioh-signal-card p {
+  margin: 0.45rem 0 0;
+}
+
+.yugioh-signal-card-good {
+  border-color: rgba(113, 191, 135, 0.28);
+}
+
+.yugioh-signal-card-neutral {
+  border-color: rgba(223, 193, 126, 0.2);
+}
+
+.yugioh-signal-card-warn {
+  border-color: rgba(240, 138, 106, 0.3);
+}
+
+.yugioh-workspace-copy,
+.yugioh-rationale {
+  margin: 0;
+}
+
+.yugioh-deck-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.yugioh-section-panel {
+  display: grid;
+  gap: 0.9rem;
+  align-content: start;
+  padding: 1rem;
+  border: 1px solid rgba(223, 193, 126, 0.12);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.yugioh-deck-section-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.yugioh-deck-entry {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 0.85rem;
+  align-items: start;
+  padding: 0.85rem;
+  border: 1px solid rgba(223, 193, 126, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.yugioh-deck-entry-thumb {
+  width: 64px;
+  height: 92px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #11181d;
+}
+
+.yugioh-deck-entry-copy {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.yugioh-role-row .tag-pill {
+  padding: 0.38rem 0.68rem;
+  font-size: 0.78rem;
+}
+
+.yugioh-stepper {
+  display: grid;
+  justify-items: end;
+  gap: 0.45rem;
+}
+
+.yugioh-stepper .ghost-button {
+  min-width: 2.35rem;
+}
+
+.yugioh-option-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.yugioh-deck-shell {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.yugioh-deck-group {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem 1.05rem;
+  border: 1px solid rgba(223, 193, 126, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.yugioh-deck-row {
+  align-items: center;
+}
+
+.yugioh-quantity-badge {
+  min-width: 46px;
+  padding: 0.45rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(223, 193, 126, 0.18);
+  background: rgba(223, 193, 126, 0.08);
+  text-align: center;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.yugioh-role-row {
+  margin-top: 0.5rem;
+}
+
+.yugioh-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
 }
 
 .hero-panel,
@@ -970,9 +1246,18 @@ input {
   .launcher-grid,
   .yugioh-panel-grid,
   .yugioh-data-hero,
+  .yugioh-builder-hero,
   .yugioh-dashboard-grid,
+  .yugioh-builder-grid,
+  .yugioh-workspace-grid,
+  .yugioh-choice-grid,
+  .yugioh-constraint-grid,
   .yugioh-card-grid,
-  .yugioh-card-record {
+  .yugioh-card-record,
+  .yugioh-card-result,
+  .yugioh-deck-grid,
+  .yugioh-deck-entry,
+  .yugioh-summary-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1012,8 +1297,22 @@ input {
   .summary-grid,
   .distribution-grid,
   .suggestion-grid,
-  .power-grid {
+  .power-grid,
+  .yugioh-option-grid {
     grid-template-columns: 1fr;
+  }
+
+  .yugioh-search-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .yugioh-open-lab-note {
+    grid-template-columns: 1fr;
+  }
+
+  .yugioh-stepper {
+    justify-items: start;
   }
 }
 

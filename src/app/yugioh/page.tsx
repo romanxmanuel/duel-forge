@@ -1,5 +1,5 @@
-import { YugiohDataLab } from "@/components/yugioh/yugioh-data-lab";
+import { YugiohBuilderApp } from "@/components/yugioh/yugioh-builder-app";
 
 export default function YugiohPage() {
-  return <YugiohDataLab />;
+  return <YugiohBuilderApp />;
 }

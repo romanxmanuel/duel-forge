@@ -113,6 +113,7 @@ function normalizeCard(card: z.infer<typeof YgoprodeckCardSchema>): YugiohCard {
       small: image.image_url_small ?? image.image_url,
       crop: image.image_url_cropped ?? image.image_url,
     },
+    aliases: [],
   };
 }
 

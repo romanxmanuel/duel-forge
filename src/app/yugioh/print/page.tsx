@@ -7,7 +7,7 @@ export default function YugiohPrintPage() {
         <Link href="/yugioh" className="ghost-button">
           Back to Yu-Gi-Oh
         </Link>
-        <p>Yu-Gi-Oh print calibration and proxy-sheet generation will land once the Duel Forge builder is active.</p>
+        <p>Yu-Gi-Oh print calibration and proxy-sheet generation are planned next, after the first Duel Forge shell.</p>
       </div>
     </main>
   );

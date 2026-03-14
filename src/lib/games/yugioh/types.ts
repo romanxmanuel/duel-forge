@@ -1,5 +1,48 @@
 import type { ImageSet, SourceAudit } from "@/lib/games/shared/types";
 
+export type YugiohFormatMode =
+  | "open-lab"
+  | "tcg-advanced"
+  | "master-duel"
+  | "edison"
+  | "goat";
+
+export type YugiohBuildIntent =
+  | "pure"
+  | "hybrid"
+  | "anti-meta"
+  | "consistency-first"
+  | "ceiling-first"
+  | "blind-second"
+  | "grind";
+
+export type YugiohStrengthTarget = "casual" | "strong" | "tournament-level" | "degenerate";
+
+export type YugiohDeckSection = "main" | "extra" | "side";
+
+export type YugiohCardRole =
+  | "starter"
+  | "extender"
+  | "searcher"
+  | "payoff"
+  | "engine-core"
+  | "engine-support"
+  | "hand-trap"
+  | "board-breaker"
+  | "grind-tool"
+  | "brick-risk"
+  | "side-tech"
+  | "extra-toolbox";
+
+export type YugiohConstraint =
+  | "pure-only"
+  | "avoid-floodgates"
+  | "low-brick"
+  | "fewer-hand-traps"
+  | "limit-traps"
+  | "low-extra-reliance"
+  | "budget-aware";
+
 export type YugiohCard = {
   id: number;
   name: string;
@@ -13,12 +56,45 @@ export type YugiohCard = {
   atk: number | null;
   def: number | null;
   images: ImageSet;
+  aliases: string[];
+};
+
+export type YugiohDeckEntry = {
+  card: YugiohCard;
+  quantity: number;
+  section: YugiohDeckSection;
+  roles: YugiohCardRole[];
+  rationale?: string;
+  locked?: boolean;
 };
 
 export type YugiohArchetype = {
   id: string;
   name: string;
   slug: string;
+};
+
+export type YugiohThemeSelection = {
+  query: string;
+  resolvedArchetype: string | null;
+  resolvedBossCards: string[];
+  resolvedSupportCards: string[];
+};
+
+export type YugiohMetaTarget = {
+  archetype: string;
+  weight: number;
+};
+
+export type YugiohStructuralReadout = {
+  consistency: number;
+  synergy: number;
+  pressure: number;
+  adaptability: number;
+  structuralIntegrity: number;
+  finalScore: number;
+  warnings: string[];
+  notes: string[];
 };
 
 export type YugiohCardSearchResponse = {
