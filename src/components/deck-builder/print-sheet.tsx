@@ -71,9 +71,14 @@ export function PrintSheet({ commander, entries }: PrintSheetProps) {
           <strong>{commander?.name ?? "Commander proxy sheet"}</strong>
           <small>Cards are sized to 2.5in x 3.5in for standard Magic playtest proxies.</small>
         </div>
-        <button type="button" className="primary-button" onClick={() => window.print()}>
-          Print / Save as PDF
-        </button>
+        <div className="tag-row">
+          <Link href="/mtg" className="ghost-button">
+            Back to MTG builder
+          </Link>
+          <button type="button" className="primary-button" onClick={() => window.print()}>
+            Print / Save as PDF
+          </button>
+        </div>
       </div>
 
       <section className="summary-grid no-print">

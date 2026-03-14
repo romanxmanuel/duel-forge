@@ -955,6 +955,12 @@ input {
   color: var(--text);
 }
 
+.print-empty-state h2 {
+  margin: 0;
+  font-family: var(--font-heading), serif;
+  line-height: 0.95;
+}
+
 .empty-state-actions {
   margin-top: 0.15rem;
 }
