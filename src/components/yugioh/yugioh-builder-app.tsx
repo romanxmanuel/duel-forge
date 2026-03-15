@@ -28,6 +28,12 @@ import { useYugiohStore } from "@/store/yugioh-store";
 
 type SearchScope = "theme" | "all";
 
+type HoverPreviewCard = {
+  name: string;
+  typeLine: string;
+  image: string;
+};
+
 const STARTER_THEME_SEEDS = ["Yubel", "Sky Striker", "Tenpai", "Branded", "Blue-Eyes"];
 
 async function fetchJson<T>(input: string, init?: RequestInit) {
@@ -100,6 +106,7 @@ function DeckSectionPanel({
   onAddCopy,
   onRemoveCopy,
   onRemoveCard,
+  setHoverPreviewCard,
 }: {
   title: string;
   section: YugiohDeckSection;
@@ -107,9 +114,10 @@ function DeckSectionPanel({
   onAddCopy: (card: YugiohCard, section: YugiohDeckSection) => void;
   onRemoveCopy: (cardId: number, section: YugiohDeckSection) => void;
   onRemoveCard: (cardId: number, section: YugiohDeckSection) => void;
+  setHoverPreviewCard: (card: HoverPreviewCard | null) => void;
 }) {
   return (
-    <section className="yugioh-section-panel">
+    <section className="ygo-list-panel ygo-builder-section">
       <div className="panel-header">
         <div>
           <p className="panel-kicker">{title}</p>
@@ -119,57 +127,44 @@ function DeckSectionPanel({
       </div>
 
       {entries.length > 0 ? (
-        <div className="yugioh-deck-section-list">
+        <div className="ygo-visual-deck-grid">
           {entries.map((entry) => (
-            <article key={`${section}-${entry.card.id}`} className="yugioh-deck-entry">
-              {entry.card.images.small ? (
-                <Image
-                  src={entry.card.images.small}
-                  alt={entry.card.name}
-                  width={64}
-                  height={92}
-                  className="yugioh-deck-entry-thumb"
-                  unoptimized
-                />
-              ) : null}
+            <div 
+              key={`${section}-${entry.card.id}`} 
+              className="ygo-visual-deck-item"
+              onMouseEnter={() => setHoverPreviewCard({
+                name: entry.card.name,
+                typeLine: entry.card.typeLine,
+                image: entry.card.images.full || entry.card.images.small || ""
+              })}
+              onMouseLeave={() => setHoverPreviewCard(null)}
+            >
+              <div className="ygo-visual-deck-image-wrapper">
+                {entry.card.images.small ? (
+                  <img
+                    src={entry.card.images.small}
+                    alt={entry.card.name}
+                    className="ygo-visual-deck-image"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="ygo-visual-deck-image placeholder">Missing Card Image</div>
+                )}
+                
+                {entry.quantity > 1 ? (
+                  <div className="ygo-visual-deck-quantity">
+                    x{entry.quantity}
+                  </div>
+                ) : null}
 
-              <div className="yugioh-deck-entry-copy">
-                <strong>{entry.card.name}</strong>
-                <small>{entry.card.typeLine}</small>
-                <div className="tag-row yugioh-role-row">
-                  {entry.roles.map((role) => (
-                    <span key={`${entry.card.id}-${role}`} className="tag-pill">
-                      {roleLabel(role)}
-                    </span>
-                  ))}
+                {/* Hover Action Overlay */}
+                <div className="ygo-visual-deck-actions">
+                  <button type="button" onClick={() => onAddCopy(entry.card, section)} disabled={entry.quantity >= 3} aria-label="Add Copy">+</button>
+                  <button type="button" onClick={() => onRemoveCopy(entry.card.id, section)} aria-label="Remove Copy">-</button>
+                  <button type="button" onClick={() => onRemoveCard(entry.card.id, section)} aria-label="Remove All" className="danger-link" style={{fontSize: '10px'}}>Del</button>
                 </div>
-                {entry.rationale ? <p className="empty-copy yugioh-rationale">{entry.rationale}</p> : null}
               </div>
-
-              <div className="yugioh-stepper">
-                <button
-                  type="button"
-                  className="ghost-button"
-                  onClick={() => onRemoveCopy(entry.card.id, section)}
-                  aria-label={`Decrease copies of ${entry.card.name}`}
-                >
-                  -
-                </button>
-                <span className="status-pill">{entry.quantity}</span>
-                <button
-                  type="button"
-                  className="ghost-button"
-                  onClick={() => onAddCopy(entry.card, section)}
-                  disabled={entry.quantity >= 3}
-                  aria-label={`Increase copies of ${entry.card.name}`}
-                >
-                  +
-                </button>
-                <button type="button" className="danger-link" onClick={() => onRemoveCard(entry.card.id, section)}>
-                  Remove
-                </button>
-              </div>
-            </article>
+            </div>
           ))}
         </div>
       ) : (
@@ -220,6 +215,8 @@ export function YugiohBuilderApp() {
   const [cardAudit, setCardAudit] = useState<SourceAudit[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [hoverPreviewCard, setHoverPreviewCard] = useState<HoverPreviewCard | null>(null);
+  
   const showArchetypeResults = deferredArchetypeQuery.trim().length >= 2;
   const showCardResults = deferredCardQuery.trim().length >= 2;
   const themeScopedArchetype = searchScope === "theme" ? theme?.resolvedArchetype ?? null : null;
@@ -353,6 +350,47 @@ export function YugiohBuilderApp() {
     }
   }
 
+  function handleExportYdk() {
+    const lines: string[] = [];
+    
+    lines.push("#created by Yu-Gi-Oh Deck Builder");
+    lines.push("#main");
+    for (const entry of main) {
+      for (let i = 0; i < entry.quantity; i++) {
+        lines.push(entry.card.id.toString());
+      }
+    }
+    
+    lines.push("#extra");
+    for (const entry of extra) {
+      for (let i = 0; i < entry.quantity; i++) {
+        lines.push(entry.card.id.toString());
+      }
+    }
+    
+    lines.push("!side");
+    for (const entry of side) {
+      for (let i = 0; i < entry.quantity; i++) {
+        lines.push(entry.card.id.toString());
+      }
+    }
+    
+    const content = lines.join("\n");
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    
+    const deckName = theme?.resolvedArchetype ?? theme?.query ?? "custom-deck";
+    const filename = `${deckName.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.ydk`;
+    
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
   async function generateShell(overrides?: {
     buildIntent?: typeof buildIntent;
     constraints?: typeof constraints;
@@ -411,35 +449,28 @@ export function YugiohBuilderApp() {
   }
 
   return (
-    <main className="page-shell page-shell-yugioh">
-      <section className="hero-panel yugioh-builder-hero">
-        <div className="hero-copy">
-          <p className="eyebrow">Yu-Gi-Oh Duel Forge</p>
-          <h1>Generate strong theme shells fast, then tune them like a real deck lab.</h1>
-          <p className="hero-description">
+    <div className="ygo-dashboard-layout ygo-builder-layout">
+      <section className="ygo-welcome-panel yugioh-builder-hero" style={{ padding: '2rem' }}>
+        <div className="hero-copy ygo-welcome-copy">
+          <h1 style={{ marginBottom: '1rem' }}>Yu-Gi-Oh Duel Forge</h1>
+          <p className="hero-description" style={{ color: '#cbd5e1', marginBottom: '1.5rem' }}>
             Duel Forge is now a real archetype-first workspace. Lock a theme, bias the shell toward the field, rebuild
             it in one click, and print the result when you want to test it physically.
           </p>
           <div className="status-row">
-            <span className="status-pill">Open Lab default</span>
-            <span className="status-pill">Meta-powered shells</span>
-            <span className="status-pill">Proxy-print ready</span>
+            <span className="ygo-live-badge">Open Lab default</span>
+            <span className="ygo-live-badge">Meta-powered shells</span>
           </div>
         </div>
 
-        <div className="panel yugioh-source-panel">
+        <div className="ygo-list-panel yugioh-source-panel" style={{ flexShrink: 0, width: '450px', background: 'rgba(15,23,42,0.6)' }}>
           <p className="panel-kicker">Open Lab</p>
-          <h2>Duel Forge workspace</h2>
-          <p className="hero-description">
+          <h2 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-heading)', margin: '0 0 0.5rem 0', color: '#f8fafc' }}>Duel Forge workspace</h2>
+          <p className="hero-description" style={{ fontSize: '0.85rem' }}>
             Banlist pressure is intentionally off here. The generator is chasing structurally strong, anti-meta ideas,
             then giving you clean rebuild paths instead of hiding the logic.
           </p>
-          <ul className="launcher-feature-list">
-            <li>Auto-generated shells from live tournament-meta data</li>
-            <li>Quick rebuild options for different tuning directions</li>
-            <li>Main / Extra / Side print workflow</li>
-          </ul>
-          <div className="tag-row">
+          <div className="tag-row" style={{ marginTop: '1rem' }}>
             <button
               type="button"
               className="primary-button"
@@ -449,16 +480,15 @@ export function YugiohBuilderApp() {
               {isGenerating ? "Generating shell..." : "Generate strongest shell"}
             </button>
             {canPrint ? (
-              <Link href="/yugioh/print" className="ghost-button">
+              <Link href="/yugioh/print" className="ygo-section-action">
                 Open print view
               </Link>
             ) : (
-              <span className="ghost-button button-disabled">Open print view</span>
+              <span className="ygo-section-action" style={{ opacity: 0.5, cursor: 'not-allowed' }}>Open print view</span>
             )}
-            <span className="status-pill">{formatMode === "open-lab" ? "Open Lab" : formatMode}</span>
           </div>
           {theme ? (
-            <div className="yugioh-theme-summary">
+            <div className="yugioh-theme-summary" style={{ marginTop: '1rem' }}>
               <strong>{theme.resolvedArchetype ?? theme.query ?? "Theme in progress"}</strong>
               <small>
                 {theme.resolvedBossCards.length > 0
@@ -466,20 +496,12 @@ export function YugiohBuilderApp() {
                   : "Pick a standout monster or spell to sharpen the build's identity."}
               </small>
             </div>
-          ) : (
-            <div className="empty-state-card">
-              <strong>Pick a theme to start</strong>
-              <p className="empty-copy">
-                Start with an archetype like Yubel, Sky Striker, or Tenpai, or anchor a specific boss monster once you
-                begin searching cards.
-              </p>
-            </div>
-          )}
+          ) : null}
         </div>
       </section>
 
-      <section className="dashboard-grid yugioh-builder-grid">
-        <div className="panel control-panel yugioh-control-stack">
+      <section className="ygo-bottom-grid yugioh-builder-grid">
+        <div className="ygo-list-panel control-panel yugioh-control-stack">
           <div className="panel-header">
             <div>
               <p className="panel-kicker">Build stance</p>
@@ -536,18 +558,15 @@ export function YugiohBuilderApp() {
 
           {showArchetypeResults && archetypes.length > 0 ? (
             <>
-              <div className="result-list">
+              <div className="ygo-compact-archetype-list">
                 {archetypes.map((archetype) => (
                   <button
                     key={archetype.id}
                     type="button"
-                    className={`result-item yugioh-archetype-item ${theme?.resolvedArchetype === archetype.name ? "result-item-active" : ""}`}
+                    className={`ygo-compact-archetype-item ${theme?.resolvedArchetype === archetype.name ? "active" : ""}`}
                     onClick={() => applyArchetype(archetype)}
                   >
-                    <span>
-                      <strong>{archetype.name}</strong>
-                      <small>Use this as the shell&apos;s primary archetype anchor.</small>
-                    </span>
+                    <strong>{archetype.name}</strong>
                   </button>
                 ))}
               </div>
@@ -684,7 +703,7 @@ export function YugiohBuilderApp() {
 
           {showCardResults && cards.length > 0 ? (
             <>
-              <div className="yugioh-card-grid">
+              <div className="ygo-compact-result-list">
                 {cards.map((card) => {
                   const suggestedSection = inferDeckSection(card);
                   const suggestedCopies =
@@ -693,46 +712,62 @@ export function YugiohBuilderApp() {
                   const bossCardSelected = theme?.resolvedBossCards.includes(card.name) ?? false;
 
                   return (
-                    <article key={card.id} className="summary-card yugioh-card-record">
-                      {card.images.small ? (
-                        <Image
-                          src={card.images.small}
-                          alt={card.name}
-                          width={120}
-                          height={175}
-                          className="yugioh-card-thumb"
-                          unoptimized
-                        />
-                      ) : null}
-                      <div className="yugioh-card-copy">
-                        <strong>{card.name}</strong>
+                    <div 
+                      key={card.id} 
+                      className="ygo-compact-card-item"
+                    >
+                      <div
+                        style={{ cursor: 'pointer', flexShrink: 0, display: 'flex' }}
+                        onMouseEnter={() => setHoverPreviewCard({
+                          name: card.name,
+                          typeLine: card.typeLine,
+                          image: card.images.full || card.images.small || ""
+                        })}
+                        onMouseLeave={() => setHoverPreviewCard(null)}
+                      >
+                        {card.images.small ? (
+                          <Image
+                            src={card.images.small}
+                            alt={card.name}
+                            width={48}
+                            height={70}
+                            className="ygo-compact-card-thumb"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="ygo-compact-card-thumb" style={{display: 'grid', placeItems: 'center', fontSize: '10px', color: '#64748b', border: '1px solid rgba(255,255,255,0.1)'}}>No img</div>
+                        )}
+                      </div>
+                      
+                      <div className="ygo-compact-card-copy">
+                        <strong>{card.name} {card.archetype ? <span style={{opacity: 0.5}}>- {card.archetype}</span> : null}</strong>
                         <small>{card.typeLine}</small>
-                        {card.archetype ? <span className="tag-pill">{card.archetype}</span> : null}
-                        <p className="hero-description yugioh-card-description">{card.desc}</p>
-                        <div className="yugioh-card-stats">
-                          {card.attribute ? <span>Attribute: {card.attribute}</span> : null}
-                          {card.race ? <span>Race: {card.race}</span> : null}
-                          {card.levelRankLink ? <span>Level/Rank/Link: {card.levelRankLink}</span> : null}
+                        <div className="ygo-compact-card-stats">
+                          {card.attribute ? <span>{card.attribute}</span> : null}
+                          {card.race ? <span>{card.race}</span> : null}
+                          {card.levelRankLink ? <span>L/R/L: {card.levelRankLink}</span> : null}
                           {card.atk !== null ? <span>ATK: {card.atk}</span> : null}
                           {card.def !== null ? <span>DEF: {card.def}</span> : null}
                         </div>
-                        <div className="tag-row yugioh-result-actions">
-                          <button type="button" className="primary-button" onClick={() => addCard(card, suggestedSection)}>
-                            Add to {sectionLabel(suggestedSection)}{suggestedCopies > 0 ? ` (${suggestedCopies})` : ""}
-                          </button>
-                          <button type="button" className="ghost-button" onClick={() => addCard(card, "side")}>
-                            Add to Side{sideCopies > 0 ? ` (${sideCopies})` : ""}
-                          </button>
-                          <button
-                            type="button"
-                            className={`ghost-button ${bossCardSelected ? "tag-pill-active" : ""}`}
-                            onClick={() => anchorCard(card)}
-                          >
-                            {bossCardSelected ? "Anchored" : "Anchor build"}
-                          </button>
-                        </div>
                       </div>
-                    </article>
+
+                      <div className="ygo-compact-card-actions">
+                        <button type="button" className="ygo-filter-chip" style={{padding: '0.2rem 0.5rem', margin: 0}} onClick={() => addCard(card, suggestedSection)}>
+                          Add{suggestedCopies > 0 ? ` (${suggestedCopies})` : ""}
+                        </button>
+                        <button type="button" className="ygo-filter-chip" style={{padding: '0.2rem 0.5rem', margin: 0}} onClick={() => addCard(card, "side")}>
+                          Side{sideCopies > 0 ? ` (${sideCopies})` : ""}
+                        </button>
+                        <button
+                          type="button"
+                          className={`ygo-filter-chip ${bossCardSelected ? "tag-pill-active" : ""}`}
+                          style={{padding: '0.2rem 0.5rem', margin: 0, background: bossCardSelected ? 'rgba(59, 130, 246, 0.4)' : undefined, color: bossCardSelected ? '#fff' : undefined}}
+                          onClick={() => anchorCard(card)}
+                        >
+                          Anchor
+                        </button>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -750,8 +785,8 @@ export function YugiohBuilderApp() {
         </div>
       </section>
 
-      <section className="dashboard-grid yugioh-workspace-grid">
-        <div className="panel meta-panel">
+      <section className="ygo-bottom-grid yugioh-workspace-grid" style={{ gridTemplateColumns: 'minmax(350px, 1fr) 2fr' }}>
+        <div className="ygo-list-panel meta-panel">
           <div className="panel-header">
             <div>
               <p className="panel-kicker">Structural readout</p>
@@ -945,6 +980,11 @@ export function YugiohBuilderApp() {
               <h2>Persistent shell</h2>
             </div>
             <div className="tag-row">
+              {totalDeckCards > 0 ? (
+                <button type="button" className="ygo-filter-chip" onClick={handleExportYdk}>
+                  Export .ydk
+                </button>
+              ) : null}
               {canPrint ? (
                 <Link href="/yugioh/print" className="ghost-button">
                   Print proxies
@@ -981,6 +1021,7 @@ export function YugiohBuilderApp() {
               onAddCopy={addCard}
               onRemoveCopy={decrementCard}
               onRemoveCard={removeCard}
+              setHoverPreviewCard={setHoverPreviewCard}
             />
             <DeckSectionPanel
               title="Extra Deck"
@@ -989,6 +1030,7 @@ export function YugiohBuilderApp() {
               onAddCopy={addCard}
               onRemoveCopy={decrementCard}
               onRemoveCard={removeCard}
+              setHoverPreviewCard={setHoverPreviewCard}
             />
             <DeckSectionPanel
               title="Side Deck"
@@ -997,10 +1039,27 @@ export function YugiohBuilderApp() {
               onAddCopy={addCard}
               onRemoveCopy={decrementCard}
               onRemoveCard={removeCard}
+              setHoverPreviewCard={setHoverPreviewCard}
             />
           </div>
         </div>
       </section>
-    </main>
+
+      {hoverPreviewCard?.image ? (
+        <div className="deck-preview-overlay" aria-hidden="true" style={{ zIndex: 100 }}>
+          <div className="deck-preview-scrim" />
+          <div className="deck-preview-frame">
+            <Image
+              src={hoverPreviewCard.image}
+              alt={hoverPreviewCard.name}
+              width={488}
+              height={680}
+              className="deck-preview-image"
+              unoptimized
+            />
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
