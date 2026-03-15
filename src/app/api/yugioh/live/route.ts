@@ -3,6 +3,8 @@ import { google } from "googleapis";
 
 const CACHE_DURATION_SECONDS = 3600; // 1 Hour
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const apiKey = process.env.YOUTUBE_API_KEY;
 
