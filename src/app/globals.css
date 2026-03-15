@@ -1597,59 +1597,6 @@ input {
   margin: 0;
 }
 
-.yugioh-calibration-page {
-  display: grid;
-  justify-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  border-radius: 24px;
-  border: 1px solid rgba(223, 193, 126, 0.14);
-  background: var(--panel-strong);
-  text-align: center;
-}
-
-.yugioh-calibration-card-outline {
-  position: relative;
-  display: grid;
-  place-items: center;
-  gap: 0.35rem;
-  width: min(280px, 100%);
-  aspect-ratio: 59 / 86;
-  border: 2px dashed rgba(223, 193, 126, 0.46);
-  border-radius: 12px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
-}
-
-.yugioh-calibration-card-outline span,
-.yugioh-calibration-card-outline small,
-.yugioh-calibration-ruler span {
-  color: var(--muted);
-}
-
-.yugioh-calibration-rulers {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 1rem;
-}
-
-.yugioh-calibration-ruler {
-  display: grid;
-  align-items: center;
-  justify-items: center;
-  border: 1px dashed rgba(223, 193, 126, 0.3);
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.yugioh-calibration-ruler-horizontal {
-  width: min(220px, 100%);
-  height: 22px;
-}
-
-.yugioh-calibration-ruler-vertical {
-  width: 22px;
-  height: 180px;
-}
 
 .yugioh-proxy-sheet-stack {
   display: grid;
@@ -1688,13 +1635,6 @@ input {
     linear-gradient(180deg, #121a1f 0%, #10151b 100%);
 }
 
-.yugioh-print-shell-guides .yugioh-proxy-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border: 1px dashed rgba(0, 0, 0, 0.5);
-  pointer-events: none;
-}
 
 .no-print {
   display: block;
@@ -1780,8 +1720,7 @@ input {
   }
 
   .yugioh-print-toolbar-actions,
-  .yugioh-print-toggle-row,
-  .yugioh-calibration-rulers {
+  .yugioh-print-toggle-row {
     flex-direction: column;
     align-items: stretch;
   }
@@ -1790,7 +1729,7 @@ input {
 @media print {
   @page {
     size: Letter portrait;
-    margin: 0.25in;
+    margin: 0.15in;
   }
 
   body {
@@ -1799,6 +1738,18 @@ input {
 
   .no-print {
     display: none !important;
+  }
+
+  /* Force all layouts to allow multi-page scrolling during print */
+  html, body, .ygo-hub-layout, .ygo-main-content, .page-shell {
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Hide scrollbars that might be forced on by overflow: visible */
+  ::-webkit-scrollbar {
+    display: none;
   }
 
   .print-page-shell {
@@ -1825,35 +1776,6 @@ input {
     gap: 0;
   }
 
-  .yugioh-calibration-page {
-    min-height: 10in;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: #fff;
-    break-after: page;
-  }
-
-  .yugioh-calibration-card-outline {
-    width: var(--yugioh-card-width-mm);
-    height: var(--yugioh-card-height-mm);
-    aspect-ratio: auto;
-    border: 1px dashed rgba(0, 0, 0, 0.55);
-    border-radius: 0;
-    background: #fff;
-  }
-
-  .yugioh-calibration-ruler-horizontal {
-    width: 50mm;
-    height: 6mm;
-    background: #fff;
-  }
-
-  .yugioh-calibration-ruler-vertical {
-    width: 6mm;
-    height: 80mm;
-    background: #fff;
-  }
 
   .yugioh-proxy-sheet-stack {
     gap: 0;
@@ -1868,6 +1790,7 @@ input {
     border-radius: 0;
     background: transparent;
     break-after: page;
+    break-inside: avoid;
   }
 
   .yugioh-proxy-page:last-child {

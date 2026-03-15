@@ -44,8 +44,6 @@ function sectionLabel(section: YugiohDeckSection) {
 
 export function YugiohPrintSheet() {
   const { theme, main, extra, side } = useYugiohStore();
-  const [includeCalibration, setIncludeCalibration] = useState(true);
-  const [showCutGuides, setShowCutGuides] = useState(true);
 
   const printableCards = useMemo(
     () => [
@@ -88,83 +86,48 @@ export function YugiohPrintSheet() {
 
   return (
     <main
-      className={`print-page-shell yugioh-print-shell ${showCutGuides ? "yugioh-print-shell-guides" : ""}`}
-      style={style}
+      className="print-page-shell yugioh-print-shell ygo-builder-layout"
+      style={{ ...style, minHeight: '100vh', padding: '2rem' }}
     >
-      <div className="print-toolbar no-print yugioh-print-toolbar">
-        <div className="yugioh-print-toolbar-actions">
-          <Link href="/yugioh" className="ghost-button">
-            Back to Yu-Gi-Oh
-          </Link>
-          <button type="button" className="primary-button" onClick={() => window.print()}>
-            Print / Save as PDF
-          </button>
-        </div>
+      <div className="ygo-welcome-panel no-print yugioh-print-toolbar" style={{ marginBottom: '2rem' }}>
+        <div className="ygo-welcome-copy" style={{ width: '100%' }}>
+          <div className="yugioh-print-toolbar-copy" style={{ marginBottom: '1.5rem' }}>
+            <h1 style={{ fontSize: '1.5rem', margin: '0 0 0.5rem 0', color: '#f8fafc' }}>{themeLabel} Print Sheet</h1>
+            <p style={{ color: '#94a3b8', margin: 0 }}>
+              {printableCards.length} proxy card{printableCards.length === 1 ? "" : "s"} laid out at{" "}
+              {YUGIOH_PRINT_PROFILE.cardWidthMm}mm x {YUGIOH_PRINT_PROFILE.cardHeightMm}mm for personal playtesting.
+            </p>
+          </div>
 
-        <div className="yugioh-print-toolbar-copy">
-          <strong>{themeLabel}</strong>
-          <small>
-            {printableCards.length} proxy card{printableCards.length === 1 ? "" : "s"} laid out at{" "}
-            {YUGIOH_PRINT_PROFILE.cardWidthMm}mm x {YUGIOH_PRINT_PROFILE.cardHeightMm}mm for personal playtesting.
-          </small>
-        </div>
-
-        <div className="yugioh-print-toggle-row">
-          <label className="yugioh-print-toggle">
-            <input
-              type="checkbox"
-              checked={includeCalibration}
-              onChange={(event) => setIncludeCalibration(event.target.checked)}
-            />
-            <span>Calibration page</span>
-          </label>
-          <label className="yugioh-print-toggle">
-            <input type="checkbox" checked={showCutGuides} onChange={(event) => setShowCutGuides(event.target.checked)} />
-            <span>Cut guides</span>
-          </label>
+          <div className="yugioh-print-toolbar-actions" style={{ display: 'flex', gap: '1rem' }}>
+            <Link href="/yugioh" className="ygo-section-action" style={{ textDecoration: 'none', padding: '0.6rem 1.2rem', fontSize: '0.9rem' }}>
+              ← Back to Duel Forge
+            </Link>
+            <button type="button" className="ygo-end-turn-btn" onClick={() => window.print()} style={{ padding: '0.6rem 2rem' }}>
+              Print / Save as PDF
+            </button>
+          </div>
         </div>
       </div>
 
-      <section className="summary-grid yugioh-summary-grid no-print">
-        <article className="summary-card">
-          <span>Main</span>
-          <strong>{main.reduce((count, entry) => count + entry.quantity, 0)}</strong>
+      <section className="summary-grid yugioh-summary-grid no-print ygo-list-panel" style={{ display: 'flex', gap: '2rem', marginBottom: '2rem' }}>
+        <article className="summary-card" style={{ flex: 1 }}>
+          <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Main Deck</span>
+          <strong style={{ display: 'block', fontSize: '1.5rem', color: '#f8fafc' }}>{main.reduce((count, entry) => count + entry.quantity, 0)}</strong>
         </article>
-        <article className="summary-card">
-          <span>Extra</span>
-          <strong>{extra.reduce((count, entry) => count + entry.quantity, 0)}</strong>
+        <article className="summary-card" style={{ flex: 1 }}>
+          <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Extra Deck</span>
+          <strong style={{ display: 'block', fontSize: '1.5rem', color: '#f8fafc' }}>{extra.reduce((count, entry) => count + entry.quantity, 0)}</strong>
         </article>
-        <article className="summary-card">
-          <span>Side</span>
-          <strong>{side.reduce((count, entry) => count + entry.quantity, 0)}</strong>
+        <article className="summary-card" style={{ flex: 1 }}>
+          <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Side Deck</span>
+          <strong style={{ display: 'block', fontSize: '1.5rem', color: '#f8fafc' }}>{side.reduce((count, entry) => count + entry.quantity, 0)}</strong>
         </article>
-        <article className="summary-card">
-          <span>Pages</span>
-          <strong>{pages.length + (includeCalibration ? 1 : 0)}</strong>
+        <article className="summary-card" style={{ flex: 1 }}>
+          <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Print Pages</span>
+          <strong style={{ display: 'block', fontSize: '1.5rem', color: '#4ade80' }}>{pages.length}</strong>
         </article>
       </section>
-
-      {includeCalibration ? (
-        <section className="yugioh-calibration-page">
-          <div className="yugioh-calibration-card-outline">
-            <span>{YUGIOH_PRINT_PROFILE.cardWidthMm}mm</span>
-            <strong>Calibration card outline</strong>
-            <small>{YUGIOH_PRINT_PROFILE.cardHeightMm}mm tall</small>
-          </div>
-          <div className="yugioh-calibration-rulers">
-            <div className="yugioh-calibration-ruler yugioh-calibration-ruler-horizontal">
-              <span>50mm check</span>
-            </div>
-            <div className="yugioh-calibration-ruler yugioh-calibration-ruler-vertical">
-              <span>80mm check</span>
-            </div>
-          </div>
-          <p className="empty-copy">
-            Print this first if you want to sanity-check scale. The card outline should measure exactly{" "}
-            {YUGIOH_PRINT_PROFILE.cardWidthMm}mm x {YUGIOH_PRINT_PROFILE.cardHeightMm}mm.
-          </p>
-        </section>
-      ) : null}
 
       <div className="yugioh-proxy-sheet-stack">
         {pages.map((pageCards, pageIndex) => (
