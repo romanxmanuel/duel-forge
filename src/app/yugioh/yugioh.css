@@ -1,0 +1,520 @@
+.ygo-hub-layout {
+  display: flex;
+  min-height: 100vh;
+  background: 
+    radial-gradient(circle at 15% 50%, rgba(30, 40, 80, 0.15), transparent 45%),
+    radial-gradient(circle at 85% 30%, rgba(50, 20, 60, 0.1), transparent 50%),
+    linear-gradient(180deg, #0b0e14 0%, #0d121a 100%);
+  color: #e2e8f0;
+  font-family: var(--font-body), sans-serif;
+  overflow: hidden; /* Prevent body scroll if hub is self-contained */
+}
+
+
+
+/* Main Content Area */
+.ygo-main-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 2rem;
+}
+
+/* Scrollbar styling for main content */
+.ygo-main-content::-webkit-scrollbar {
+  width: 8px;
+}
+.ygo-main-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+.ygo-main-content::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 4px;
+}
+.ygo-main-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+/* Dashboard Grid Component */
+.ygo-dashboard-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.ygo-welcome-panel {
+  background: linear-gradient(135deg, rgba(30, 58, 138, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 16px;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.ygo-welcome-copy {
+  position: relative;
+  z-index: 2;
+}
+
+.ygo-welcome-copy h1 {
+  font-size: 2rem;
+  margin: 0 0 0.25rem 0;
+  font-family: var(--font-heading), serif;
+  color: #f8fafc;
+}
+
+.ygo-welcome-copy p {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.ygo-search-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.ygo-search-input-wrapper {
+  position: relative;
+  margin-bottom: 0.75rem;
+  z-index: 50;
+}
+
+.ygo-search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.ygo-search-filters {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.ygo-filter-chip {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ygo-filter-chip:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Sections */
+.ygo-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.ygo-section-header h2 {
+  font-size: 1.25rem;
+  font-family: var(--font-heading), serif;
+  margin: 0;
+  color: #f8fafc;
+}
+
+.ygo-section-action {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ygo-section-action:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+}
+
+.ygo-bottom-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+}
+
+.ygo-list-panel {
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+/* Deck Builder Visual Grid Layout */
+.ygo-builder-layout {
+  padding: 0; 
+  /* We remove padding here because the sidebar layout wrapper already handles max-width */
+}
+
+.ygo-builder-layout .ygo-welcome-panel {
+  margin-bottom: 2rem;
+}
+
+.ygo-builder-section {
+  margin-bottom: 2rem;
+}
+
+.ygo-visual-deck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.ygo-visual-deck-item {
+  position: relative;
+  aspect-ratio: 0.68;
+  border-radius: 4px;
+}
+
+.ygo-visual-deck-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  background: #111;
+}
+
+.ygo-visual-deck-image-wrapper:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.5), 0 0 10px rgba(59, 130, 246, 0.4);
+  z-index: 20;
+}
+
+.ygo-visual-deck-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ygo-visual-deck-image.placeholder {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  font-size: 0.6rem;
+  color: #94a3b8;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ygo-visual-deck-quantity {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* Hover action overlay inside the grid item */
+.ygo-visual-deck-actions {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+  backdrop-filter: blur(2px);
+}
+
+.ygo-visual-deck-image-wrapper:hover .ygo-visual-deck-actions {
+  opacity: 1;
+}
+
+.ygo-visual-deck-actions button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #f8fafc;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.ygo-visual-deck-actions button:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.5);
+  border-color: rgba(59, 130, 246, 0.8);
+}
+
+.ygo-visual-deck-actions button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.ygo-visual-deck-actions button.danger-link {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+
+.ygo-visual-deck-actions button.danger-link:hover {
+  background: rgba(239, 68, 68, 0.5);
+  border-color: rgba(239, 68, 68, 0.8);
+  color: #fff;
+}
+
+/* Compact Search Results */
+.ygo-compact-result-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.ygo-compact-card-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 0.5rem;
+  transition: all 0.2s;
+}
+
+.ygo-compact-card-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.ygo-compact-card-thumb {
+  width: 48px;
+  height: 70px;
+  border-radius: 4px;
+  object-fit: cover;
+  background: #111;
+  flex-shrink: 0;
+}
+
+.ygo-compact-card-copy {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ygo-compact-card-copy strong {
+  font-size: 0.95rem;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ygo-compact-card-copy small {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ygo-compact-card-stats {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  color: #cbd5e1;
+  margin-top: 0.15rem;
+  flex-wrap: wrap;
+}
+
+.ygo-compact-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.ygo-compact-archetype-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.ygo-compact-archetype-item {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.ygo-compact-archetype-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.ygo-compact-archetype-item.active {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(30, 58, 138, 0.2));
+  border-color: rgba(59, 130, 246, 0.6);
+  color: #fff;
+}
+
+/* Archetype Rich Autocomplete Dropdown */
+.ygo-archetype-search-wrapper {
+  position: relative;
+}
+
+.ygo-archetype-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: rgba(9, 18, 32, 0.97);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 14px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  z-index: 200;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.ygo-archetype-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  color: #e2e8f0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.ygo-archetype-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.ygo-archetype-dropdown-item:hover,
+.ygo-archetype-dropdown-item:focus {
+  background: rgba(59, 130, 246, 0.12);
+  outline: none;
+}
+
+.ygo-archetype-dropdown-item.active {
+  background: rgba(59, 130, 246, 0.2);
+  border-left: 2px solid #3b82f6;
+}
+
+.ygo-archetype-thumb {
+  width: 38px;
+  height: 55px;
+  border-radius: 4px;
+  object-fit: cover;
+  background: #1e293b;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ygo-archetype-thumb-placeholder {
+  width: 38px;
+  height: 55px;
+  border-radius: 4px;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-size: 1rem;
+  color: #475569;
+}
+
+.ygo-archetype-dropdown-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex-grow: 1;
+}
+
+.ygo-archetype-dropdown-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ygo-archetype-dropdown-sub {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.15rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ygo-archetype-freeform-item {
+  padding: 0.7rem 0.9rem;
+  font-size: 0.85rem;
+  color: #60a5fa;
+  cursor: pointer;
+  border: none;
+  background: rgba(59, 130, 246, 0.06);
+  width: 100%;
+  text-align: left;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ygo-archetype-freeform-item:hover {
+  background: rgba(59, 130, 246, 0.14);
+}

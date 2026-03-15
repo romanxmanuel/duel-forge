@@ -512,67 +512,73 @@ export function YugiohBuilderApp() {
           <label className="field-label" htmlFor="yugioh-archetype-search">
             Search archetypes
           </label>
-          <input
-            id="yugioh-archetype-search"
-            className="app-input"
-            placeholder="Yubel, Sky Striker, Tenpai..."
-            value={archetypeQuery}
-            onChange={(event) => {
-              setErrorMessage(null);
-              const nextValue = event.target.value;
-              setArchetypeQuery(nextValue);
-              setThemeQuery(nextValue);
+          <div className="ygo-archetype-search-wrapper">
+            <input
+              id="yugioh-archetype-search"
+              className="app-input"
+              placeholder="Blue-Eyes, Sky Striker, Tenpai..."
+              value={archetypeQuery}
+              autoComplete="off"
+              onChange={(event) => {
+                setErrorMessage(null);
+                const nextValue = event.target.value;
+                setArchetypeQuery(nextValue);
+                setThemeQuery(nextValue);
 
-              if (nextValue.trim().length < 2) {
-                setArchetypes([]);
-                setArchetypeAudit([]);
-              }
-            }}
-          />
+                if (nextValue.trim().length < 2) {
+                  setArchetypes([]);
+                  setArchetypeAudit([]);
+                }
+              }}
+            />
 
-          {!theme && !showArchetypeResults ? (
-            <div className="tag-row yugioh-seed-row">
-              {STARTER_THEME_SEEDS.map((themeName) => (
-                <button key={themeName} type="button" className="tag-pill" onClick={() => primeTheme(themeName)}>
-                  {themeName}
-                </button>
-              ))}
-            </div>
-          ) : null}
-
-          {theme ? (
-            <div className="tag-row yugioh-selected-theme">
-              <span className="tag-pill tag-pill-active">{theme.resolvedArchetype ?? theme.query ?? "Theme"}</span>
-              <button
-                type="button"
-                className="ghost-button"
-                onClick={() => {
-                  clearTheme();
-                  setSearchScope("all");
-                }}
-              >
-                Clear theme
-              </button>
-            </div>
-          ) : null}
-
-          {showArchetypeResults && archetypes.length > 0 ? (
-            <>
-              <div className="ygo-compact-archetype-list">
+            {showArchetypeResults && (archetypes.length > 0 || archetypeQuery.trim().length >= 2) ? (
+              <div className="ygo-archetype-dropdown">
                 {archetypes.map((archetype) => (
                   <button
                     key={archetype.id}
                     type="button"
-                    className={`ygo-compact-archetype-item ${theme?.resolvedArchetype === archetype.name ? "active" : ""}`}
-                    onClick={() => applyArchetype(archetype)}
+                    className={`ygo-archetype-dropdown-item ${theme?.resolvedArchetype === archetype.name ? "active" : ""}`}
+                    onClick={() => {
+                      applyArchetype(archetype);
+                      setArchetypeQuery(archetype.name);
+                    }}
                   >
-                    <strong>{archetype.name}</strong>
+                    {archetype.previewCardImageUrl ? (
+                      <Image
+                        src={archetype.previewCardImageUrl}
+                        alt={archetype.previewCardName ?? archetype.name}
+                        width={38}
+                        height={55}
+                        className="ygo-archetype-thumb"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="ygo-archetype-thumb-placeholder">🃏</div>
+                    )}
+                    <div className="ygo-archetype-dropdown-copy">
+                      <span className="ygo-archetype-dropdown-name">{archetype.name}</span>
+                      {archetype.previewCardName && (
+                        <span className="ygo-archetype-dropdown-sub">e.g. {archetype.previewCardName}</span>
+                      )}
+                    </div>
                   </button>
                 ))}
+
+                {/* Freeform theme fallback */}
+                {archetypeQuery.trim().length >= 2 && (
+                  <button
+                    type="button"
+                    className="ygo-archetype-freeform-item"
+                    onClick={() => primeTheme(archetypeQuery.trim())}
+                  >
+                    <span>→</span>
+                    <span>Use &ldquo;{archetypeQuery.trim()}&rdquo; as a custom theme</span>
+                  </button>
+                )}
               </div>
-              <SourceAuditBlock sourceAudit={archetypeAudit} />
-            </>
-          ) : null}
+            ) : null}
+          </div>
 
           <div className="yugioh-open-lab-note">
             <span className="status-pill">Format mode</span>

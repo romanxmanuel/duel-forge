@@ -72,6 +72,8 @@ export type YugiohArchetype = {
   id: string;
   name: string;
   slug: string;
+  previewCardImageUrl: string | null;
+  previewCardName: string | null;
 };
 
 export type YugiohThemeSelection = {

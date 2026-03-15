@@ -117,11 +117,36 @@ function normalizeCard(card: z.infer<typeof YgoprodeckCardSchema>): YugiohCard {
   };
 }
 
-function normalizeArchetype(name: string): YugiohArchetype {
+async function fetchArchetypePreviewCard(archetypeName: string): Promise<{ imageUrl: string | null; cardName: string | null }> {
+  try {
+    const params = new URLSearchParams({ archetype: archetypeName, num: "1", offset: "0" });
+    const raw = await fetchYgoprodeck(`/cardinfo.php?${params.toString()}`, {
+      allowEmptyResult: true,
+      next: { revalidate: 60 * 60 * 24 },
+    });
+
+    if (!raw) return { imageUrl: null, cardName: null };
+
+    const parsed = CardInfoResponseSchema.safeParse(raw);
+    if (!parsed.success || parsed.data.data.length === 0) return { imageUrl: null, cardName: null };
+
+    const firstCard = parsed.data.data[0];
+    return {
+      imageUrl: firstCard.card_images[0]?.image_url_small ?? firstCard.card_images[0]?.image_url ?? null,
+      cardName: firstCard.name,
+    };
+  } catch {
+    return { imageUrl: null, cardName: null };
+  }
+}
+
+function normalizeArchetype(name: string, previewCardImageUrl: string | null = null, previewCardName: string | null = null): YugiohArchetype {
   return {
     id: toSlug(name),
     name,
     slug: toSlug(name),
+    previewCardImageUrl,
+    previewCardName,
   };
 }
 
@@ -154,18 +179,22 @@ function scoreMatch(value: string, query: string) {
 export async function searchYugiohArchetypes(query: string): Promise<YugiohArchetypeSearchResponse> {
   const payload = z.array(ArchetypeSchema).parse(
     await fetchYgoprodeck("/archetypes.php", {
-      next: {
-        revalidate: 60 * 60 * 24,
-      },
+      next: { revalidate: 60 * 60 * 24 },
     }),
   );
 
-  const archetypes = payload
+  const matchedNames = payload
     .map((item) => item.archetype_name)
     .filter((name) => name.toLowerCase().includes(query.toLowerCase()))
     .sort((left, right) => scoreMatch(left, query) - scoreMatch(right, query) || left.localeCompare(right))
-    .slice(0, 16)
-    .map(normalizeArchetype);
+    .slice(0, 12);
+
+  // Fetch preview card images for all matched archetypes in parallel
+  const previews = await Promise.all(matchedNames.map((name) => fetchArchetypePreviewCard(name)));
+
+  const archetypes = matchedNames.map((name, i) =>
+    normalizeArchetype(name, previews[i].imageUrl, previews[i].cardName),
+  );
 
   return {
     archetypes,
