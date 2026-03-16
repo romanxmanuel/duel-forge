@@ -7,10 +7,9 @@ import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import {
   createStructuralReadout,
   createRoleBucketSummary,
+  computeOpeningHandOdds,
   deriveQuickRebuildOptions,
   inferDeckSection,
-  YUGIOH_CONSTRAINT_OPTIONS,
-  YUGIOH_INTENT_OPTIONS,
   YUGIOH_STRENGTH_OPTIONS,
 } from "@/lib/games/yugioh/builder-shell";
 import type { SourceAudit } from "@/lib/games/shared/types";
@@ -23,6 +22,7 @@ import type {
   YugiohCardSearchResponse,
   YugiohDeckEntry,
   YugiohDeckSection,
+  YugiohTurnPreference,
 } from "@/lib/games/yugioh/types";
 import { useYugiohStore } from "@/store/yugioh-store";
 
@@ -32,6 +32,7 @@ type HoverPreviewCard = {
   name: string;
   typeLine: string;
   image: string;
+  desc: string;
 };
 
 const STARTER_THEME_SEEDS = ["Yubel", "Sky Striker", "Tenpai", "Branded", "Blue-Eyes"];
@@ -129,15 +130,17 @@ function DeckSectionPanel({
       {entries.length > 0 ? (
         <div className="ygo-visual-deck-grid">
           {entries.map((entry) => (
-            <div 
-              key={`${section}-${entry.card.id}`} 
+            <div
+              key={`${section}-${entry.card.id}`}
               className="ygo-visual-deck-item"
               onMouseEnter={() => setHoverPreviewCard({
                 name: entry.card.name,
                 typeLine: entry.card.typeLine,
-                image: entry.card.images.full || entry.card.images.small || ""
+                image: entry.card.images.full || entry.card.images.small || "",
+                desc: entry.card.desc,
               })}
               onMouseLeave={() => setHoverPreviewCard(null)}
+              title={entry.rationale ?? undefined}
             >
               <div className="ygo-visual-deck-image-wrapper">
                 {entry.card.images.small ? (
@@ -178,8 +181,8 @@ function DeckSectionPanel({
 
 export function YugiohBuilderApp() {
   const {
-    formatMode,
     strengthTarget,
+    turnPreference,
     buildIntent,
     theme,
     constraints,
@@ -190,13 +193,12 @@ export function YugiohBuilderApp() {
     sourceAudit,
     metaSnapshot,
     setStrengthTarget,
+    setTurnPreference,
     setBuildIntent,
     setConstraints,
-    clearTheme,
     setThemeQuery,
     setResolvedArchetype,
     toggleBossCard,
-    toggleConstraint,
     setGeneratedDeck,
     addCard,
     decrementCard,
@@ -315,6 +317,10 @@ export function YugiohBuilderApp() {
         metaSnapshot,
       }),
     [buildIntent, constraints, metaSnapshot, readout, theme],
+  );
+  const openingHandOdds = useMemo(
+    () => computeOpeningHandOdds({ main, turnPreference }),
+    [main, turnPreference],
   );
   const totalDeckCards = sumEntries(main) + sumEntries(extra) + sumEntries(side);
   const hasGeneratedShell = buildNotes.length > 0 || metaSnapshot !== null;
@@ -583,36 +589,35 @@ export function YugiohBuilderApp() {
             ) : null}
           </div>
 
-          <div className="yugioh-open-lab-note">
-            <span className="status-pill">Format mode</span>
+          <div className="panel-header" style={{ marginTop: '0.5rem' }}>
             <div>
-              <strong>Open Lab</strong>
-              <small>Legality is ignored on purpose here. The goal is strong ideas and clean structure, not compliance.</small>
+              <p className="panel-kicker">Turn order</p>
+              <h3>Are you going first or second?</h3>
             </div>
           </div>
 
-          <div className="panel-header">
-            <div>
-              <p className="panel-kicker">Intent</p>
-              <h3>How should the shell behave?</h3>
-            </div>
+          <div className="yugioh-turn-toggle">
+            <button
+              type="button"
+              className={`yugioh-turn-card ${turnPreference === "going-first" ? "yugioh-turn-card-active" : ""}`}
+              onClick={() => setTurnPreference("going-first")}
+            >
+              <span className="yugioh-turn-icon">⚡</span>
+              <strong>Going First</strong>
+              <small>Build your board. Max combo ceiling, negation density, and extension.</small>
+            </button>
+            <button
+              type="button"
+              className={`yugioh-turn-card ${turnPreference === "going-second" ? "yugioh-turn-card-active" : ""}`}
+              onClick={() => setTurnPreference("going-second")}
+            >
+              <span className="yugioh-turn-icon">💥</span>
+              <strong>Going Second</strong>
+              <small>Crack their board. Board breakers, hand traps, and crack-back pressure.</small>
+            </button>
           </div>
 
-          <div className="yugioh-choice-grid">
-            {YUGIOH_INTENT_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                className={`yugioh-choice-card ${buildIntent === option.value ? "yugioh-choice-card-active" : ""}`}
-                onClick={() => setBuildIntent(option.value)}
-              >
-                <strong>{option.title}</strong>
-                <small>{option.description}</small>
-              </button>
-            ))}
-          </div>
-
-          <div className="panel-header">
+          <div className="panel-header" style={{ marginTop: '1.25rem' }}>
             <div>
               <p className="panel-kicker">Strength</p>
               <h3>How hard should it push?</h3>
@@ -629,27 +634,6 @@ export function YugiohBuilderApp() {
               >
                 <strong>{option.title}</strong>
                 <small>{option.description}</small>
-              </button>
-            ))}
-          </div>
-
-          <div className="panel-header">
-            <div>
-              <p className="panel-kicker">Constraints</p>
-              <h3>Pressure the shell into shape</h3>
-            </div>
-          </div>
-
-          <div className="yugioh-constraint-grid">
-            {YUGIOH_CONSTRAINT_OPTIONS.map((constraint) => (
-              <button
-                key={constraint.value}
-                type="button"
-                className={`yugioh-constraint-card ${constraints.includes(constraint.value) ? "yugioh-constraint-card-active" : ""}`}
-                onClick={() => toggleConstraint(constraint.value)}
-              >
-                <strong>{constraint.title}</strong>
-                <small>{constraint.description}</small>
               </button>
             ))}
           </div>
@@ -710,6 +694,17 @@ export function YugiohBuilderApp() {
 
           {errorMessage ? <p className="error-copy">{errorMessage}</p> : null}
 
+          {showCardResults && cards.length === 0 ? (
+            <div className="empty-state-card" style={{ marginTop: '0.75rem' }}>
+              <strong>No cards found</strong>
+              <p className="empty-copy">
+                {themeScopedArchetype
+                  ? `No results in ${themeScopedArchetype}. Switch to "All cards" to search the full card pool.`
+                  : "No cards matched that search. Try a different name or partial keyword."}
+              </p>
+            </div>
+          ) : null}
+
           {showCardResults && cards.length > 0 ? (
             <>
               <div className="ygo-compact-result-list">
@@ -730,7 +725,8 @@ export function YugiohBuilderApp() {
                         onMouseEnter={() => setHoverPreviewCard({
                           name: card.name,
                           typeLine: card.typeLine,
-                          image: card.images.full || card.images.small || ""
+                          image: card.images.full || card.images.small || "",
+                          desc: card.desc,
                         })}
                         onMouseLeave={() => setHoverPreviewCard(null)}
                       >
@@ -782,15 +778,14 @@ export function YugiohBuilderApp() {
               </div>
               <SourceAuditBlock sourceAudit={cardAudit} />
             </>
-          ) : (
+          ) : !showCardResults ? (
             <div className="empty-state-card">
-              <strong>Search and hand-tune anything</strong>
+              <strong>Add cards manually</strong>
               <p className="empty-copy">
-                Search cards to sharpen the shell manually, add off-theme tech, or anchor a specific boss monster that
-                the auto-generator should respect on the next pass.
+                Search to add hand traps, off-theme tech, or specific engine pieces. Use "Theme cards" to browse only cards from your chosen archetype, or "All cards" to search everything.
               </p>
             </div>
-          )}
+          ) : null}
         </div>
       </section>
 
@@ -913,24 +908,36 @@ export function YugiohBuilderApp() {
             </div>
           ) : null}
 
-          <div className="summary-grid yugioh-summary-grid">
-            <article className="summary-card">
-              <span>Consistency</span>
-              <strong>{readout.consistency}</strong>
-            </article>
-            <article className="summary-card">
-              <span>Synergy</span>
-              <strong>{readout.synergy}</strong>
-            </article>
-            <article className="summary-card">
-              <span>Pressure</span>
-              <strong>{readout.pressure}</strong>
-            </article>
-            <article className="summary-card">
-              <span>Adaptability</span>
-              <strong>{readout.adaptability}</strong>
-            </article>
-          </div>
+          {totalDeckCards > 0 ? (
+            <div className="yugioh-opening-odds">
+              <p className="panel-kicker" style={{ marginBottom: '0.6rem' }}>Opening hand odds ({openingHandOdds.handSize}-card hand)</p>
+              <div className="yugioh-odds-strip">
+                <div className="yugioh-odds-item">
+                  <span className="yugioh-odds-label">Starter</span>
+                  <div className="yugioh-odds-bar-track">
+                    <div className="yugioh-odds-bar yugioh-odds-bar-starter" style={{ width: `${openingHandOdds.starterOdds}%` }} />
+                  </div>
+                  <span className={`yugioh-odds-pct ${openingHandOdds.starterOdds >= 80 ? "odds-good" : openingHandOdds.starterOdds >= 60 ? "odds-ok" : "odds-low"}`}>{openingHandOdds.starterOdds}%</span>
+                </div>
+                <div className="yugioh-odds-item">
+                  <span className="yugioh-odds-label">Hand Trap</span>
+                  <div className="yugioh-odds-bar-track">
+                    <div className="yugioh-odds-bar yugioh-odds-bar-trap" style={{ width: `${openingHandOdds.handTrapOdds}%` }} />
+                  </div>
+                  <span className={`yugioh-odds-pct ${openingHandOdds.handTrapOdds >= 75 ? "odds-good" : openingHandOdds.handTrapOdds >= 50 ? "odds-ok" : "odds-low"}`}>{openingHandOdds.handTrapOdds}%</span>
+                </div>
+                {openingHandOdds.breakerOdds > 0 ? (
+                  <div className="yugioh-odds-item">
+                    <span className="yugioh-odds-label">Breaker</span>
+                    <div className="yugioh-odds-bar-track">
+                      <div className="yugioh-odds-bar yugioh-odds-bar-breaker" style={{ width: `${openingHandOdds.breakerOdds}%` }} />
+                    </div>
+                    <span className={`yugioh-odds-pct ${openingHandOdds.breakerOdds >= 60 ? "odds-good" : openingHandOdds.breakerOdds >= 40 ? "odds-ok" : "odds-low"}`}>{openingHandOdds.breakerOdds}%</span>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
 
           <div className="summary-grid yugioh-summary-grid">
             <article className="summary-card">
@@ -946,8 +953,8 @@ export function YugiohBuilderApp() {
               <strong>{sumEntries(side)}</strong>
             </article>
             <article className="summary-card">
-              <span>Structural Integrity</span>
-              <strong>{readout.structuralIntegrity}</strong>
+              <span>Score</span>
+              <strong>{readout.finalScore}</strong>
             </article>
           </div>
 
@@ -1061,11 +1068,18 @@ export function YugiohBuilderApp() {
             <Image
               src={hoverPreviewCard.image}
               alt={hoverPreviewCard.name}
-              width={488}
-              height={680}
+              width={421}
+              height={614}
               className="deck-preview-image"
               unoptimized
             />
+            {hoverPreviewCard.desc ? (
+              <div className="deck-preview-desc">
+                <p className="deck-preview-desc-name">{hoverPreviewCard.name}</p>
+                <p className="deck-preview-desc-type">{hoverPreviewCard.typeLine}</p>
+                <p className="deck-preview-desc-text">{hoverPreviewCard.desc}</p>
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}

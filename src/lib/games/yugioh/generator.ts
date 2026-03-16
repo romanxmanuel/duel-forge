@@ -230,6 +230,64 @@ function desiredCopies({
   return clamp(copies, 1, 3);
 }
 
+function buildReadableRationale({
+  card,
+  roles,
+  deckAppearances,
+  sampleSize,
+  fieldLevel,
+  theme,
+}: {
+  card: YugiohCard;
+  roles: ReturnType<typeof inferCardRoles>;
+  deckAppearances: number;
+  sampleSize: number;
+  fieldLevel: "theme" | "field";
+  theme: YugiohThemeSelection;
+}): string {
+  const themeLabel = theme.resolvedArchetype ?? theme.resolvedBossCards[0] ?? theme.query.trim();
+  const appearanceText =
+    fieldLevel === "theme"
+      ? `In ${deckAppearances}/${sampleSize} ${themeLabel} tournament lists.`
+      : `Staple in ${deckAppearances}/${sampleSize} recent meta decks.`;
+
+  if (roles.includes("hand-trap")) {
+    return `${appearanceText} Hand trap — activates from hand to disrupt opponent combos without using your turn.`;
+  }
+  if (roles.includes("board-breaker")) {
+    return `${appearanceText} Board breaker — clears established fields when you're going second.`;
+  }
+  if (roles.includes("starter") && roles.includes("searcher")) {
+    return `${appearanceText} Starter and searcher — begins your combo and finds the next piece from deck.`;
+  }
+  if (roles.includes("starter")) {
+    return `${appearanceText} Starter — gets your combo going from a single card in hand.`;
+  }
+  if (roles.includes("searcher")) {
+    return `${appearanceText} Searcher — digs your engine pieces out of the deck to power through disruption.`;
+  }
+  if (roles.includes("extender")) {
+    return `${appearanceText} Extender — keeps your combo alive after the opener, even through a negate.`;
+  }
+  if (roles.includes("payoff")) {
+    return `${appearanceText} Payoff — the threat you build toward. Closes out games or locks in your win condition.`;
+  }
+  if (roles.includes("engine-core")) {
+    return `${appearanceText} Core engine piece — essential to the ${themeLabel} strategy.`;
+  }
+  if (roles.includes("extra-toolbox")) {
+    return `${appearanceText} Extra Deck toolbox — accessible through your combo lines as a situational out or extender.`;
+  }
+  if (roles.includes("side-tech")) {
+    return `${appearanceText} Side deck tech — brought in for specific matchups where it swings the game.`;
+  }
+  if (roles.includes("grind-tool")) {
+    return `${appearanceText} Grind tool — generates advantage in longer games and helps recover resources.`;
+  }
+
+  return `${appearanceText} Recurring inclusion across competitive lists for this strategy.`;
+}
+
 function rankedCandidatesFromStats({
   stats,
   cardMap,
@@ -238,7 +296,6 @@ function rankedCandidatesFromStats({
   buildIntent,
   constraints,
   sampleSize,
-  rationalePrefix,
   fieldLevel,
 }: {
   stats: CardStats[];
@@ -248,7 +305,6 @@ function rankedCandidatesFromStats({
   buildIntent: YugiohBuildIntent;
   constraints: YugiohConstraint[];
   sampleSize: number;
-  rationalePrefix: string;
   fieldLevel: "theme" | "field";
 }) {
   return stats
@@ -316,7 +372,7 @@ function rankedCandidatesFromStats({
         averageCopies: entry.averageCopies,
         deckAppearances: entry.deckAppearances,
         section,
-        rationale: `${rationalePrefix} in ${entry.deckAppearances}/${sampleSize} sampled ${fieldLevel === "theme" ? "theme" : "field"} deck(s).`,
+        rationale: buildReadableRationale({ card, roles, deckAppearances: entry.deckAppearances, sampleSize, fieldLevel, theme }),
       } satisfies RankedCandidate;
     })
     .filter((candidate): candidate is RankedCandidate => Boolean(candidate))
@@ -470,7 +526,7 @@ export async function generateYugiohDeckShell({
       averageCopies: 1,
       deckAppearances: 1,
       section: /Fusion|Synchro|Xyz|Link/i.test(card.typeLine) ? "extra" : "main",
-      rationale: `Explicitly anchored because you asked the shell to respect ${card.name}.`,
+      rationale: `Anchored — you pinned this as a key card, so the shell is built around it.`,
     })) satisfies RankedCandidate[];
 
     main = fillSectionFromCandidates({
@@ -502,7 +558,6 @@ export async function generateYugiohDeckShell({
     buildIntent,
     constraints,
     sampleSize: Math.max(matchedDecks.length, 1),
-    rationalePrefix: "Recurring main-deck inclusion",
     fieldLevel: "theme",
   });
   const extraThemeCandidates = rankedCandidatesFromStats({
@@ -513,7 +568,6 @@ export async function generateYugiohDeckShell({
     buildIntent,
     constraints,
     sampleSize: Math.max(matchedDecks.length, 1),
-    rationalePrefix: "Recurring Extra Deck inclusion",
     fieldLevel: "theme",
   });
   const sideThemeCandidates = rankedCandidatesFromStats({
@@ -524,7 +578,6 @@ export async function generateYugiohDeckShell({
     buildIntent,
     constraints,
     sampleSize: Math.max(matchedDecks.length, 1),
-    rationalePrefix: "Recurring side-deck inclusion",
     fieldLevel: "theme",
   });
   const mainFieldCandidates = rankedCandidatesFromStats({
@@ -535,7 +588,6 @@ export async function generateYugiohDeckShell({
     buildIntent,
     constraints,
     sampleSize: Math.max(fieldDecks.length, 1),
-    rationalePrefix: "Common field staple",
     fieldLevel: "field",
   });
   const extraFieldCandidates = rankedCandidatesFromStats({
@@ -546,7 +598,6 @@ export async function generateYugiohDeckShell({
     buildIntent,
     constraints,
     sampleSize: Math.max(fieldDecks.length, 1),
-    rationalePrefix: "Common field Extra Deck card",
     fieldLevel: "field",
   });
   const sideFieldCandidates = rankedCandidatesFromStats({
@@ -557,7 +608,6 @@ export async function generateYugiohDeckShell({
     buildIntent,
     constraints,
     sampleSize: Math.max(fieldDecks.length, 1),
-    rationalePrefix: "Common field side-deck card",
     fieldLevel: "field",
   });
 
@@ -613,7 +663,7 @@ export async function generateYugiohDeckShell({
       averageCopies: 2,
       deckAppearances: 1,
       section: /Fusion|Synchro|Xyz|Link/i.test(card.typeLine) ? "extra" : "main",
-      rationale: `Fallback theme card surfaced from direct YGOPRODeck card search for ${theme.query}.`,
+      rationale: `Included via direct archetype search — no tournament data available, so this is a best-guess based on card pool.`,
     })) satisfies RankedCandidate[];
 
     main = fillSectionFromCandidates({

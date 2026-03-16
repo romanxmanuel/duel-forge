@@ -325,12 +325,12 @@ export function createRoleBucketSummary(payload: {
   return [
     {
       id: "theme-core",
-      title: "Theme Core",
+      title: "Engine",
       count: themeCopies,
       description:
         themeCopies >= 16
-          ? `${label} is showing up often enough to keep the deck identity tight.`
-          : `${label} still needs more named engine density to feel fully locked in.`,
+          ? `${label} engine density is tight. The deck will feel cohesive.`
+          : `${label} needs more named engine pieces to feel like a real build.`,
     },
     {
       id: "starters",
@@ -338,8 +338,8 @@ export function createRoleBucketSummary(payload: {
       count: starters,
       description:
         starters >= 12
-          ? "Starter density looks healthy for cleaner opening hands."
-          : "Starter density is still light, so this shell may open awkwardly.",
+          ? "Opener density is healthy. You'll reliably see your first move."
+          : "Low on starters — expect more bricks and awkward opening hands.",
     },
     {
       id: "extenders",
@@ -347,26 +347,28 @@ export function createRoleBucketSummary(payload: {
       count: extenders,
       description:
         extenders >= 6
-          ? "The shell has enough extension to keep combo turns alive after the opener."
-          : "Extension is still thin, so the deck may stall after the first starter.",
+          ? "Enough extenders to push through disruption and keep combos alive."
+          : "Thin on extenders — one negate may kill your entire turn.",
     },
     {
       id: "interaction",
-      title: "Interaction",
+      title: "Hand Traps",
       count: interaction,
       description:
-        interaction >= 6
-          ? "Interaction density is strong enough to trade with the field."
-          : "Interaction is currently modest, so this build leans harder on engine pressure.",
+        interaction >= 9
+          ? "Heavy hand trap count. Strong chance to slow down or stop the opponent's combo."
+          : interaction >= 6
+          ? "Solid hand trap count for trading with most combo decks."
+          : "Light on hand traps — the opponent gets more room to set up.",
     },
     {
       id: "breakers",
-      title: "Breakers",
+      title: "Board Breakers",
       count: breakers,
       description:
         breakers >= 5
-          ? "Board-breaking tools are present in meaningful numbers."
-          : "Breaker density is still light unless you want a more aggressive blind-second shell.",
+          ? "Strong breaker lineup. Going second is viable and explosive."
+          : "Light on board breakers — winning going second will be harder.",
     },
     {
       id: "payoffs",
@@ -374,26 +376,26 @@ export function createRoleBucketSummary(payload: {
       count: payoffs,
       description:
         payoffs >= 6
-          ? "The shell has enough payoff pressure to end turns on real threats."
-          : "Payoff density is still conservative, which keeps the build safer but less explosive.",
+          ? "Enough payoff pressure to end turns on threatening boards."
+          : "Low payoff count — the deck may struggle to close out games.",
     },
     {
       id: "brick-risk",
-      title: "Brick Risk",
+      title: "Bricks",
       count: brickRisk,
       description:
         brickRisk <= 4
-          ? "Brick exposure is reasonably contained right now."
-          : "High-end pieces are starting to crowd out smoother draws.",
+          ? "Brick count is under control."
+          : "High brick count — dead draws will show up more often than you'd like.",
     },
     {
       id: "extra-tools",
-      title: "Extra Tools",
+      title: "Extra Deck",
       count: extraTools,
       description:
         extraTools >= 10
-          ? "The Extra Deck toolbox has enough depth to support multiple lines."
-          : "The Extra Deck is still shallow unless that is intentional for the build.",
+          ? "Deep Extra Deck toolbox with multiple accessible lines."
+          : "Shallow Extra Deck — limited access to tech plays and outs.",
     },
   ];
 }
@@ -482,6 +484,50 @@ export function deriveQuickRebuildOptions(payload: {
   }
 
   return [...deduped.values()].slice(0, 4);
+}
+
+export type YugiohOpeningHandOdds = {
+  starterOdds: number;
+  handTrapOdds: number;
+  breakerOdds: number;
+  handSize: number;
+};
+
+function combinations(n: number, k: number): number {
+  if (k > n) return 0;
+  if (k === 0 || k === n) return 1;
+  let result = 1;
+  for (let i = 0; i < k; i++) {
+    result = (result * (n - i)) / (i + 1);
+  }
+  return result;
+}
+
+function atLeastOne(deckSize: number, desiredCount: number, handSize: number): number {
+  if (desiredCount <= 0) return 0;
+  if (desiredCount >= deckSize) return 1;
+  const pNone = combinations(deckSize - desiredCount, handSize) / combinations(deckSize, handSize);
+  return Math.round((1 - pNone) * 100);
+}
+
+export function computeOpeningHandOdds(payload: {
+  main: YugiohDeckEntry[];
+  turnPreference: "going-first" | "going-second";
+}): YugiohOpeningHandOdds {
+  const { main, turnPreference } = payload;
+  const deckSize = Math.max(main.reduce((sum, e) => sum + e.quantity, 0), 40);
+  const handSize = turnPreference === "going-second" ? 6 : 5;
+
+  const starterCount = countRoleCopies(main, "starter") + countRoleCopies(main, "searcher");
+  const handTrapCount = countRoleCopies(main, "hand-trap");
+  const breakerCount = countRoleCopies(main, "board-breaker");
+
+  return {
+    starterOdds: atLeastOne(deckSize, starterCount, handSize),
+    handTrapOdds: atLeastOne(deckSize, handTrapCount, handSize),
+    breakerOdds: atLeastOne(deckSize, breakerCount, handSize),
+    handSize,
+  };
 }
 
 export function createStructuralReadout(payload: {

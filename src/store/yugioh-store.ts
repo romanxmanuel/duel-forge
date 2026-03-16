@@ -15,11 +15,13 @@ import type {
   YugiohFormatMode,
   YugiohStrengthTarget,
   YugiohThemeSelection,
+  YugiohTurnPreference,
 } from "@/lib/games/yugioh/types";
 
 type YugiohStoreState = {
   formatMode: YugiohFormatMode;
   strengthTarget: YugiohStrengthTarget;
+  turnPreference: YugiohTurnPreference;
   buildIntent: YugiohBuildIntent;
   theme: YugiohThemeSelection | null;
   constraints: YugiohConstraint[];
@@ -31,6 +33,7 @@ type YugiohStoreState = {
   metaSnapshot: YugiohGeneratedDeckResponse["metaSnapshot"] | null;
   setFormatMode: (formatMode: YugiohFormatMode) => void;
   setStrengthTarget: (strengthTarget: YugiohStrengthTarget) => void;
+  setTurnPreference: (turnPreference: YugiohTurnPreference) => void;
   setBuildIntent: (buildIntent: YugiohBuildIntent) => void;
   setConstraints: (constraints: YugiohConstraint[]) => void;
   clearTheme: () => void;
@@ -107,7 +110,8 @@ export const useYugiohStore = create<YugiohStoreState>()(
     (set) => ({
       formatMode: "open-lab",
       strengthTarget: "strong",
-      buildIntent: "anti-meta",
+      turnPreference: "going-first",
+      buildIntent: "ceiling-first",
       theme: null,
       constraints: ["low-brick"],
       main: [],
@@ -118,6 +122,13 @@ export const useYugiohStore = create<YugiohStoreState>()(
       metaSnapshot: null,
       setFormatMode: (formatMode) => set({ formatMode, ...clearGeneratedInsights() }),
       setStrengthTarget: (strengthTarget) => set({ strengthTarget, ...clearGeneratedInsights() }),
+      setTurnPreference: (turnPreference) =>
+        set({
+          turnPreference,
+          buildIntent: turnPreference === "going-second" ? "blind-second" : "ceiling-first",
+          constraints: turnPreference === "going-second" ? ["low-brick"] : ["low-brick"],
+          ...clearGeneratedInsights(),
+        }),
       setBuildIntent: (buildIntent) => set({ buildIntent, ...clearGeneratedInsights() }),
       setConstraints: (constraints) => set({ constraints, ...clearGeneratedInsights() }),
       clearTheme: () => set({ theme: null, ...clearGeneratedInsights() }),
@@ -240,7 +251,8 @@ export const useYugiohStore = create<YugiohStoreState>()(
         set({
           formatMode: "open-lab",
           strengthTarget: "strong",
-          buildIntent: "anti-meta",
+          turnPreference: "going-first",
+          buildIntent: "ceiling-first",
           theme: null,
           constraints: ["low-brick"],
           main: [],
@@ -257,6 +269,7 @@ export const useYugiohStore = create<YugiohStoreState>()(
       partialize: (state) => ({
         formatMode: state.formatMode,
         strengthTarget: state.strengthTarget,
+        turnPreference: state.turnPreference,
         buildIntent: state.buildIntent,
         theme: state.theme,
         constraints: state.constraints,

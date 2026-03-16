@@ -7,6 +7,8 @@ export type YugiohFormatMode =
   | "edison"
   | "goat";
 
+export type YugiohTurnPreference = "going-first" | "going-second";
+
 export type YugiohBuildIntent =
   | "pure"
   | "hybrid"
