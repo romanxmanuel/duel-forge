@@ -5,7 +5,7 @@ Dual-game deck building studio for:
 - `MTG Commander Lab`
 - `Yu-Gi-Oh Duel Forge`
 
-Live app: [magic-the-gathering-helper.vercel.app](https://magic-the-gathering-helper.vercel.app)
+Live app: [duel-card-lab.vercel.app](https://duel-card-lab.vercel.app)
 
 ## What It Does
 
