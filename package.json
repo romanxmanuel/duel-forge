@@ -1,8 +1,8 @@
 {
-  "name": "magic-the-gathering-helper",
+  "name": "duel-forge",
   "version": "0.1.0",
   "private": true,
-  "description": "Commander deck builder and printable proxy sheet generator powered by free MTG data sources.",
+  "description": "Dual-game deck building studio with MTG Command Lab and Yu-Gi-Oh Duel Lab.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

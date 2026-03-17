@@ -414,7 +414,7 @@ export const useYugiohStore = create<YugiohStoreState>()(
         }),
     }),
     {
-      name: "card-lab-yugioh-store",
+      name: "duel-forge-yugioh-store",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         formatMode: state.formatMode,

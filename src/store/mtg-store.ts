@@ -95,7 +95,7 @@ export const useMtgStore = create<MtgStoreState>()(
         }),
     }),
     {
-      name: "magic-the-gathering-helper",
+      name: "duel-forge-mtg-store",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         selectedCommander: state.selectedCommander,

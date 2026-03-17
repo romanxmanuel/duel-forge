@@ -17,7 +17,7 @@ export const useAppStore = create<AppStoreState>()(
       setLastVisitedGame: (lastVisitedGame) => set({ lastVisitedGame }),
     }),
     {
-      name: "card-lab-app-store",
+      name: "duel-forge-app-store",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         lastVisitedGame: state.lastVisitedGame,
