@@ -106,6 +106,11 @@ export function DeckBuilderApp({ initialBannedList }: DeckBuilderAppProps) {
   const [commanderMeta, setCommanderMeta] = useState<CommanderMeta | null>(null);
   const [hoverPreviewCard, setHoverPreviewCard] = useState<HoverPreviewCard | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [isSearchingCommanders, setIsSearchingCommanders] = useState(false);
+  const [isLoadingColorSuggestions, setIsLoadingColorSuggestions] = useState(false);
+  const [isLoadingCommanderMeta, setIsLoadingCommanderMeta] = useState(false);
+  const [isSearchingCards, setIsSearchingCards] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -122,20 +127,24 @@ export function DeckBuilderApp({ initialBannedList }: DeckBuilderAppProps) {
   useEffect(() => {
     if (deferredCommanderQuery.trim().length < 2) {
       setCommanderResults([]);
+      setIsSearchingCommanders(false);
       return;
     }
 
     let isActive = true;
+    setIsSearchingCommanders(true);
 
     fetchJson<CommanderOption[]>(`/api/commanders?q=${encodeURIComponent(deferredCommanderQuery.trim())}`)
       .then((results) => {
         if (isActive) {
           setCommanderResults(results);
+          setIsSearchingCommanders(false);
         }
       })
       .catch((error: Error) => {
         if (isActive) {
           setErrorMessage(error.message);
+          setIsSearchingCommanders(false);
         }
       });
 
@@ -147,21 +156,25 @@ export function DeckBuilderApp({ initialBannedList }: DeckBuilderAppProps) {
   useEffect(() => {
     if (selectedColors.length === 0 || selectedCommander) {
       setColorSuggestions([]);
+      setIsLoadingColorSuggestions(false);
       return;
     }
 
     let isActive = true;
     const colorKey = selectedColors.join(",");
+    setIsLoadingColorSuggestions(true);
 
     fetchJson<CommanderOption[]>(`/api/color-commanders?colors=${encodeURIComponent(colorKey)}`)
       .then((results) => {
         if (isActive) {
           setColorSuggestions(results);
+          setIsLoadingColorSuggestions(false);
         }
       })
       .catch((error: Error) => {
         if (isActive) {
           setErrorMessage(error.message);
+          setIsLoadingColorSuggestions(false);
         }
       });
 
@@ -173,6 +186,7 @@ export function DeckBuilderApp({ initialBannedList }: DeckBuilderAppProps) {
   useEffect(() => {
     if (!selectedCommander) {
       setCommanderMeta(null);
+      setIsLoadingCommanderMeta(false);
       return;
     }
 
@@ -185,16 +199,19 @@ export function DeckBuilderApp({ initialBannedList }: DeckBuilderAppProps) {
     if (focusTag) {
       params.set("tag", focusTag.slug);
     }
+    setIsLoadingCommanderMeta(true);
 
     fetchJson<CommanderMeta>(`/api/commander-meta?${params.toString()}`)
       .then((meta) => {
         if (isActive) {
           setCommanderMeta(meta);
+          setIsLoadingCommanderMeta(false);
         }
       })
       .catch((error: Error) => {
         if (isActive) {
           setErrorMessage(error.message);
+          setIsLoadingCommanderMeta(false);
         }
       });
 
@@ -206,6 +223,7 @@ export function DeckBuilderApp({ initialBannedList }: DeckBuilderAppProps) {
   useEffect(() => {
     if (deferredCardQuery.trim().length < 2 || !selectedCommander) {
       setCardResults([]);
+      setIsSearchingCards(false);
       return;
     }
 
@@ -214,16 +232,19 @@ export function DeckBuilderApp({ initialBannedList }: DeckBuilderAppProps) {
       q: deferredCardQuery.trim(),
       colors: selectedCommander.colorIdentity.join(","),
     });
+    setIsSearchingCards(true);
 
     fetchJson<CardSummary[]>(`/api/cards?${params.toString()}`)
       .then((results) => {
         if (isActive) {
           setCardResults(results);
+          setIsSearchingCards(false);
         }
       })
       .catch((error: Error) => {
         if (isActive) {
           setErrorMessage(error.message);
+          setIsSearchingCards(false);
         }
       });
 
@@ -269,6 +290,11 @@ export function DeckBuilderApp({ initialBannedList }: DeckBuilderAppProps) {
     setHoverPreviewCard(card);
   }
 
+  function showActionMessage(message: string) {
+    setActionMessage(message);
+    window.setTimeout(() => setActionMessage((current) => (current === message ? null : current)), 1600);
+  }
+
   function toggleColor(color: ManaColor) {
     setErrorMessage(null);
     setCommander(null);
@@ -284,6 +310,7 @@ export function DeckBuilderApp({ initialBannedList }: DeckBuilderAppProps) {
     setCommander(commander);
     setCommanderResults([]);
     setSelectedColors(commander.colorIdentity);
+    showActionMessage(`${commander.name} selected.`);
   }
 
   function hydrateColorSuggestion(suggestion: CommanderOption) {
@@ -338,6 +365,7 @@ export function DeckBuilderApp({ initialBannedList }: DeckBuilderAppProps) {
           });
 
           setGeneratedDeck(generatedDeck);
+          showActionMessage("Commander shell generated.");
         } catch (error) {
           setErrorMessage(error instanceof Error ? error.message : "Unable to generate a deck shell.");
         }
@@ -353,6 +381,7 @@ export function DeckBuilderApp({ initialBannedList }: DeckBuilderAppProps) {
     });
     setCardQuery("");
     setCardResults([]);
+    showActionMessage(`${card.name} added.`);
   }
 
   return (
@@ -453,6 +482,15 @@ export function DeckBuilderApp({ initialBannedList }: DeckBuilderAppProps) {
               value={commanderQuery}
               onChange={(event) => setCommanderQuery(event.target.value)}
             />
+            <p className={`field-status ${isSearchingCommanders ? "field-status-busy" : ""}`} aria-live="polite">
+              {commanderQuery.trim().length < 2
+                ? "Type at least 2 letters to search commanders."
+                : isSearchingCommanders
+                  ? "Searching commanders..."
+                  : commanderResults.length > 0
+                    ? `${commanderResults.length} commander${commanderResults.length === 1 ? "" : "s"} ready.`
+                    : "No commander matches yet."}
+            </p>
 
             {commanderResults.length > 0 ? (
               <div className="result-list">
@@ -501,6 +539,15 @@ export function DeckBuilderApp({ initialBannedList }: DeckBuilderAppProps) {
                 </div>
               </>
             ) : null}
+            {!selectedCommander && selectedColors.length > 0 ? (
+              <p className={`field-status ${isLoadingColorSuggestions ? "field-status-busy" : ""}`} aria-live="polite">
+                {isLoadingColorSuggestions
+                  ? `Loading commander suggestions for ${colorIdentityDisplay}...`
+                  : colorSuggestions.length > 0
+                    ? `${colorSuggestions.length} color-based suggestions ready.`
+                    : "No color-based suggestions yet."}
+              </p>
+            ) : null}
 
             {selectedCommander ? (
               <>
@@ -545,6 +592,11 @@ export function DeckBuilderApp({ initialBannedList }: DeckBuilderAppProps) {
             <button type="button" className="primary-button" onClick={generateDeck} disabled={isPending}>
               {isPending ? "Building deck shell..." : "Build Commander Deck"}
             </button>
+            {actionMessage ? (
+              <p className="field-status field-status-success" aria-live="polite">
+                {actionMessage}
+              </p>
+            ) : null}
 
             {errorMessage ? <p className="error-copy">{errorMessage}</p> : null}
           </div>
@@ -570,6 +622,13 @@ export function DeckBuilderApp({ initialBannedList }: DeckBuilderAppProps) {
               <p className="meta-description">
                 {commanderMeta?.description ||
                   "Fetching commander context. The app will use EDHREC data for synergy and combo suggestions."}
+              </p>
+              <p className={`field-status ${isLoadingCommanderMeta ? "field-status-busy" : ""}`} aria-live="polite">
+                {isLoadingCommanderMeta
+                  ? "Loading commander context..."
+                  : commanderMeta
+                    ? "Commander context loaded."
+                    : "Commander context will appear here."}
               </p>
 
               {commanderMeta?.comboIdeas?.length ? (
@@ -734,6 +793,17 @@ export function DeckBuilderApp({ initialBannedList }: DeckBuilderAppProps) {
             onChange={(event) => setCardQuery(event.target.value)}
             disabled={!selectedCommander}
           />
+          <p className={`field-status ${isSearchingCards ? "field-status-busy" : ""}`} aria-live="polite">
+            {!selectedCommander
+              ? "Choose a commander to unlock card search."
+              : cardQuery.trim().length < 2
+                ? "Type at least 2 letters to search cards."
+                : isSearchingCards
+                  ? "Searching cards..."
+                  : cardResults.length > 0
+                    ? `${cardResults.length} card${cardResults.length === 1 ? "" : "s"} ready to add.`
+                    : "No card matches yet."}
+          </p>
 
           {cardResults.length > 0 ? (
             <div className="result-list compact">

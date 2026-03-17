@@ -29,10 +29,6 @@ export function AppHeader() {
   const pathname = usePathname();
   const sectionLabel = getSectionLabel(pathname);
 
-  if (pathname.startsWith("/yugioh")) {
-    return null;
-  }
-
   return (
     <header className="site-header no-print">
       <div className="site-header-inner">

@@ -187,6 +187,16 @@ export async function searchYugiohArchetypes(query: string): Promise<YugiohArche
     .map((item) => item.archetype_name)
     .filter((name) => name.toLowerCase().includes(query.toLowerCase()))
     .sort((left, right) => scoreMatch(left, query) - scoreMatch(right, query) || left.localeCompare(right))
+    .reduce<string[]>((uniqueNames, name) => {
+      const slug = toSlug(name);
+
+      if (uniqueNames.some((existingName) => toSlug(existingName) === slug)) {
+        return uniqueNames;
+      }
+
+      uniqueNames.push(name);
+      return uniqueNames;
+    }, [])
     .slice(0, 12);
 
   // Fetch preview card images for all matched archetypes in parallel

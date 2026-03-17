@@ -82,6 +82,24 @@ export function PrintSheet({ commander, entries }: PrintSheetProps) {
       </div>
 
       <section className="summary-grid no-print">
+        <article className="summary-card print-readiness-card">
+          <span>Ready to print</span>
+          <strong>{pageCount} page{pageCount === 1 ? "" : "s"}</strong>
+          <small>Browser print dialog opens next. Save as PDF if you want a digital sheet.</small>
+        </article>
+        <article className="summary-card print-readiness-card">
+          <span>Card size</span>
+          <strong>2.5in x 3.5in</strong>
+          <small>Standard MTG playtest dimensions with cut-ready spacing.</small>
+        </article>
+        <article className="summary-card print-readiness-card">
+          <span>Best result</span>
+          <strong>100% scale</strong>
+          <small>Disable browser scaling and verify the first page before cutting everything.</small>
+        </article>
+      </section>
+
+      <section className="summary-grid no-print">
         <article className="summary-card">
           <span>Total cards</span>
           <strong>{cards.length}</strong>

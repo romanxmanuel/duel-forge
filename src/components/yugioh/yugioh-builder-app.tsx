@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   createStructuralReadout,
@@ -12,17 +12,14 @@ import {
   inferDeckSection,
   YUGIOH_STRENGTH_OPTIONS,
 } from "@/lib/games/yugioh/builder-shell";
-import type { SourceAudit } from "@/lib/games/shared/types";
 import type {
   YugiohArchetype,
   YugiohArchetypeSearchResponse,
   YugiohCard,
-  YugiohCardRole,
   YugiohGeneratedDeckResponse,
   YugiohCardSearchResponse,
   YugiohDeckEntry,
   YugiohDeckSection,
-  YugiohTurnPreference,
 } from "@/lib/games/yugioh/types";
 import { useYugiohStore } from "@/store/yugioh-store";
 
@@ -48,29 +45,6 @@ async function fetchJson<T>(input: string, init?: RequestInit) {
   return (await response.json()) as T;
 }
 
-function roleLabel(role: YugiohCardRole) {
-  switch (role) {
-    case "engine-core":
-      return "Engine Core";
-    case "engine-support":
-      return "Engine Support";
-    case "hand-trap":
-      return "Hand Trap";
-    case "board-breaker":
-      return "Board Breaker";
-    case "grind-tool":
-      return "Grind Tool";
-    case "brick-risk":
-      return "Brick Risk";
-    case "side-tech":
-      return "Side Tech";
-    case "extra-toolbox":
-      return "Extra Toolbox";
-    default:
-      return role.charAt(0).toUpperCase() + role.slice(1);
-  }
-}
-
 function sectionLabel(section: YugiohDeckSection) {
   return section.charAt(0).toUpperCase() + section.slice(1);
 }
@@ -83,21 +57,8 @@ function sumEntries(entries: YugiohDeckEntry[]) {
   return entries.reduce((count, entry) => count + entry.quantity, 0);
 }
 
-function SourceAuditBlock({ sourceAudit }: { sourceAudit: SourceAudit[] }) {
-  if (sourceAudit.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="yugioh-source-block">
-      {sourceAudit.map((entry, index) => (
-        <div key={`${entry.sourceName}-${entry.sourceUrl}-${index}`} className="yugioh-source-row">
-          <strong>{entry.sourceName}</strong>
-          <small>{entry.notes}</small>
-        </div>
-      ))}
-    </div>
-  );
+function formatSectionForToast(section: YugiohDeckSection) {
+  return section === "main" ? "Main Deck" : section === "extra" ? "Extra Deck" : "Side Deck";
 }
 
 function DeckSectionPanel({
@@ -107,15 +68,17 @@ function DeckSectionPanel({
   onAddCopy,
   onRemoveCopy,
   onRemoveCard,
-  setHoverPreviewCard,
+  hoverPreviewCard,
+  onTogglePreview,
 }: {
   title: string;
   section: YugiohDeckSection;
   entries: YugiohDeckEntry[];
   onAddCopy: (card: YugiohCard, section: YugiohDeckSection) => void;
-  onRemoveCopy: (cardId: number, section: YugiohDeckSection) => void;
-  onRemoveCard: (cardId: number, section: YugiohDeckSection) => void;
-  setHoverPreviewCard: (card: HoverPreviewCard | null) => void;
+  onRemoveCopy: (card: YugiohCard, section: YugiohDeckSection) => void;
+  onRemoveCard: (card: YugiohCard, section: YugiohDeckSection) => void;
+  hoverPreviewCard: HoverPreviewCard | null;
+  onTogglePreview: (card: HoverPreviewCard) => void;
 }) {
   return (
     <section className="ygo-list-panel ygo-builder-section">
@@ -128,46 +91,49 @@ function DeckSectionPanel({
       </div>
 
       {entries.length > 0 ? (
-        <div className="ygo-visual-deck-grid">
+        <div className="ygo-builder-card-list">
           {entries.map((entry) => (
-            <div
-              key={`${section}-${entry.card.id}`}
-              className="ygo-visual-deck-item"
-              onMouseEnter={() => setHoverPreviewCard({
-                name: entry.card.name,
-                typeLine: entry.card.typeLine,
-                image: entry.card.images.full || entry.card.images.small || "",
-                desc: entry.card.desc,
-              })}
-              onMouseLeave={() => setHoverPreviewCard(null)}
-              title={entry.rationale ?? undefined}
-            >
-              <div className="ygo-visual-deck-image-wrapper">
+            <article key={`${section}-${entry.card.id}`} className="ygo-builder-card-row" title={entry.rationale ?? undefined}>
+              <button
+                type="button"
+                className={`ygo-builder-card-thumb-button ${hoverPreviewCard?.name === entry.card.name ? "active" : ""}`}
+                onClick={() =>
+                  onTogglePreview({
+                    name: entry.card.name,
+                    typeLine: entry.card.typeLine,
+                    image: entry.card.images.full || entry.card.images.small || "",
+                    desc: entry.card.desc,
+                  })
+                }
+                aria-pressed={hoverPreviewCard?.name === entry.card.name}
+              >
                 {entry.card.images.small ? (
-                  <img
+                  <Image
                     src={entry.card.images.small}
                     alt={entry.card.name}
-                    className="ygo-visual-deck-image"
-                    loading="lazy"
+                    width={56}
+                    height={81}
+                    className="ygo-builder-card-thumb"
+                    unoptimized
                   />
                 ) : (
-                  <div className="ygo-visual-deck-image placeholder">Missing Card Image</div>
+                  <span className="ygo-builder-card-thumb ygo-builder-card-thumb-placeholder">No image</span>
                 )}
-                
-                {entry.quantity > 1 ? (
-                  <div className="ygo-visual-deck-quantity">
-                    x{entry.quantity}
-                  </div>
-                ) : null}
-
-                {/* Hover Action Overlay */}
-                <div className="ygo-visual-deck-actions">
-                  <button type="button" onClick={() => onAddCopy(entry.card, section)} disabled={entry.quantity >= 3} aria-label="Add Copy">+</button>
-                  <button type="button" onClick={() => onRemoveCopy(entry.card.id, section)} aria-label="Remove Copy">-</button>
-                  <button type="button" onClick={() => onRemoveCard(entry.card.id, section)} aria-label="Remove All" className="danger-link" style={{fontSize: '10px'}}>Del</button>
+              </button>
+              <div className="ygo-builder-card-copy">
+                <div className="ygo-builder-card-copy-top">
+                  <strong>{entry.card.name}</strong>
+                  <span className="ygo-builder-card-qty">x{entry.quantity}</span>
                 </div>
+                <small>{entry.card.typeLine}</small>
+                {entry.rationale ? <p>{entry.rationale}</p> : null}
               </div>
-            </div>
+              <div className="ygo-builder-card-actions">
+                <button type="button" onClick={() => onAddCopy(entry.card, section)} disabled={entry.quantity >= 3} aria-label="Add Copy">+</button>
+                <button type="button" onClick={() => onRemoveCopy(entry.card, section)} aria-label="Remove Copy">-</button>
+                <button type="button" onClick={() => onRemoveCard(entry.card, section)} aria-label="Remove All" className="danger-link">Del</button>
+              </div>
+            </article>
           ))}
         </div>
       ) : (
@@ -188,7 +154,6 @@ export function YugiohBuilderApp() {
     extra,
     side,
     buildNotes,
-    sourceAudit,
     metaSnapshot,
     setStrengthTarget,
     setTurnPreference,
@@ -211,11 +176,12 @@ export function YugiohBuilderApp() {
   const deferredCardQuery = useDeferredValue(cardQuery);
   const [archetypes, setArchetypes] = useState<YugiohArchetype[]>([]);
   const [cards, setCards] = useState<YugiohCard[]>([]);
-  const [archetypeAudit, setArchetypeAudit] = useState<SourceAudit[]>([]);
-  const [cardAudit, setCardAudit] = useState<SourceAudit[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isArchetypeDropdownOpen, setIsArchetypeDropdownOpen] = useState(false);
   const [hoverPreviewCard, setHoverPreviewCard] = useState<HoverPreviewCard | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const showArchetypeResults = deferredArchetypeQuery.trim().length >= 2;
   const showCardResults = deferredCardQuery.trim().length >= 2;
@@ -235,7 +201,6 @@ export function YugiohBuilderApp() {
         }
 
         setArchetypes(payload.archetypes);
-        setArchetypeAudit(payload.sourceAudit);
       })
       .catch((error: Error) => {
         if (isActive) {
@@ -269,7 +234,6 @@ export function YugiohBuilderApp() {
         }
 
         setCards(payload.cards);
-        setCardAudit(payload.sourceAudit);
       })
       .catch((error: Error) => {
         if (isActive) {
@@ -320,10 +284,40 @@ export function YugiohBuilderApp() {
     () => computeOpeningHandOdds({ main, turnPreference }),
     [main, turnPreference],
   );
+  const uniqueBuildNotes = useMemo(() => [...new Set(buildNotes)], [buildNotes]);
+  const uniqueWarnings = useMemo(() => [...new Set(readout.warnings)], [readout.warnings]);
+  const uniqueNotes = useMemo(() => [...new Set(readout.notes)], [readout.notes]);
+  const buildReads = useMemo(
+    () => [...new Set([...uniqueWarnings.map((warning) => `Warning: ${warning}`), ...uniqueNotes, ...uniqueBuildNotes])],
+    [uniqueBuildNotes, uniqueNotes, uniqueWarnings],
+  );
   const totalDeckCards = sumEntries(main) + sumEntries(extra) + sumEntries(side);
   const hasGeneratedShell = buildNotes.length > 0 || metaSnapshot !== null;
   const canPrint = totalDeckCards > 0;
   const showQuickRebuilds = hasGeneratedShell && quickRebuildOptions.length > 0;
+  const anchoredCards = useMemo(
+    () =>
+      [...new Set([...(theme?.resolvedBossCards ?? []), ...(theme?.resolvedSupportCards ?? [])])].filter(Boolean),
+    [theme],
+  );
+
+  function showToast(message: string) {
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+
+    setToastMessage(message);
+    toastTimeoutRef.current = setTimeout(() => setToastMessage(null), 1400);
+  }
+
+  useEffect(
+    () => () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    },
+    [],
+  );
 
   function applyArchetype(archetype: YugiohArchetype) {
     setErrorMessage(null);
@@ -331,6 +325,10 @@ export function YugiohBuilderApp() {
     setThemeQuery(archetype.name);
     setResolvedArchetype(archetype.name);
     setSearchScope("theme");
+    setArchetypeQuery(archetype.name);
+    setArchetypes([]);
+    setIsArchetypeDropdownOpen(false);
+    showToast(`${archetype.name} selected.`);
   }
 
   function primeTheme(themeName: string) {
@@ -340,6 +338,13 @@ export function YugiohBuilderApp() {
     setThemeQuery(themeName);
     setResolvedArchetype(themeName);
     setSearchScope("theme");
+    setArchetypes([]);
+    setIsArchetypeDropdownOpen(false);
+    showToast(`${themeName} locked in as your deck theme.`);
+  }
+
+  function togglePreviewCard(card: HoverPreviewCard) {
+    setHoverPreviewCard((current) => (current?.name === card.name ? null : card));
   }
 
   function anchorCard(card: YugiohCard) {
@@ -351,9 +356,8 @@ export function YugiohBuilderApp() {
       setSearchScope("theme");
     }
 
-    if (!theme?.resolvedBossCards.includes(card.name)) {
-      toggleBossCard(card);
-    }
+    toggleBossCard(card);
+    showToast(`${card.name} locked in as an anchored card.`);
   }
 
   function handleExportYdk() {
@@ -395,9 +399,10 @@ export function YugiohBuilderApp() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    showToast(`${filename} exported.`);
   }
 
-  async function generateShell(overrides?: {
+async function generateDeck(overrides?: {
     buildIntent?: typeof buildIntent;
     constraints?: typeof constraints;
   }) {
@@ -413,7 +418,7 @@ export function YugiohBuilderApp() {
       activeTheme.resolvedArchetype ?? activeTheme.resolvedBossCards[0] ?? activeTheme.query.trim();
 
     if (!activeThemeLabel) {
-      setErrorMessage("Pick an archetype or anchor a boss card before generating a shell.");
+      setErrorMessage("Pick an archetype or lock in a key card before generating a deck.");
       return;
     }
 
@@ -436,8 +441,9 @@ export function YugiohBuilderApp() {
       });
 
       setGeneratedDeck(generatedDeck);
+      showToast(`${activeThemeLabel} deck generated.`);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Unable to generate Yu-Gi-Oh shell.");
+      setErrorMessage(error instanceof Error ? error.message : "Unable to generate Yu-Gi-Oh deck.");
     } finally {
       setIsGenerating(false);
     }
@@ -449,10 +455,25 @@ export function YugiohBuilderApp() {
   }) {
     setBuildIntent(option.buildIntent);
     setConstraints(option.constraints);
-    await generateShell({
+    await generateDeck({
       buildIntent: option.buildIntent,
       constraints: option.constraints,
     });
+  }
+
+  function handleAddCard(card: YugiohCard, section: YugiohDeckSection) {
+    addCard(card, section);
+    showToast(`${card.name} added to ${formatSectionForToast(section)}.`);
+  }
+
+  function handleRemoveCopy(card: YugiohCard, section: YugiohDeckSection) {
+    decrementCard(card.id, section);
+    showToast(`${card.name} reduced in ${formatSectionForToast(section)}.`);
+  }
+
+  function handleRemoveCard(card: YugiohCard, section: YugiohDeckSection) {
+    removeCard(card.id, section);
+    showToast(`${card.name} removed from ${formatSectionForToast(section)}.`);
   }
 
   return (
@@ -472,10 +493,10 @@ export function YugiohBuilderApp() {
           <button
             type="button"
             className="primary-button"
-            onClick={() => void generateShell()}
+            onClick={() => void generateDeck()}
             disabled={isGenerating}
           >
-            {isGenerating ? "Generating..." : "⚡ Generate"}
+            {isGenerating ? "Building deck..." : "⚡ Build deck"}
           </button>
           {canPrint ? (
             <Link href="/yugioh/print" className="ghost-button">Print</Link>
@@ -501,9 +522,9 @@ export function YugiohBuilderApp() {
         {/* LEFT — Controls */}
         <div className="ygo-forge-left">
 
-          {/* Theme */}
+          {/* Archetype */}
           <div className="ygo-forge-control-block">
-            <p className="ygo-forge-label">Theme</p>
+            <p className="ygo-forge-label">Archetype / theme</p>
             <div className="ygo-archetype-search-wrapper">
               <input
                 id="yugioh-archetype-search"
@@ -511,18 +532,26 @@ export function YugiohBuilderApp() {
                 placeholder="Blue-Eyes, Sky Striker, Tenpai..."
                 value={archetypeQuery}
                 autoComplete="off"
+                onFocus={() => {
+                  if (archetypeQuery.trim().length >= 2) {
+                    setIsArchetypeDropdownOpen(true);
+                  }
+                }}
+                onBlur={() => {
+                  window.setTimeout(() => setIsArchetypeDropdownOpen(false), 120);
+                }}
                 onChange={(event) => {
                   setErrorMessage(null);
                   const nextValue = event.target.value;
+                  setIsArchetypeDropdownOpen(nextValue.trim().length >= 2);
                   setArchetypeQuery(nextValue);
                   setThemeQuery(nextValue);
                   if (nextValue.trim().length < 2) {
                     setArchetypes([]);
-                    setArchetypeAudit([]);
                   }
                 }}
               />
-              {showArchetypeResults && (archetypes.length > 0 || archetypeQuery.trim().length >= 2) ? (
+              {isArchetypeDropdownOpen && showArchetypeResults && (archetypes.length > 0 || archetypeQuery.trim().length >= 2) ? (
                 <div className="ygo-archetype-dropdown">
                   {archetypes.map((archetype) => (
                     <button
@@ -561,7 +590,7 @@ export function YugiohBuilderApp() {
                       onClick={() => primeTheme(archetypeQuery.trim())}
                     >
                       <span>→</span>
-                      <span>Use &ldquo;{archetypeQuery.trim()}&rdquo; as custom theme</span>
+                      <span>Lock in &ldquo;{archetypeQuery.trim()}&rdquo; as a custom theme</span>
                     </button>
                   )}
                 </div>
@@ -581,6 +610,28 @@ export function YugiohBuilderApp() {
             </div>
           </div>
 
+          {(theme?.resolvedArchetype || anchoredCards.length > 0) ? (
+            <div className="ygo-forge-control-block">
+              <p className="ygo-forge-label">Anchored cards</p>
+              <div className="ygo-anchored-stack">
+                {theme?.resolvedArchetype ? (
+                  <article className="ygo-anchored-card">
+                    <span className="ygo-anchored-tag">Theme</span>
+                    <strong>{theme.resolvedArchetype}</strong>
+                    <small>Core game plan</small>
+                  </article>
+                ) : null}
+                {anchoredCards.map((name) => (
+                  <article key={name} className="ygo-anchored-card">
+                    <span className="ygo-anchored-tag">Locked</span>
+                    <strong>{name}</strong>
+                    <small>Anchored card</small>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           {/* Turn order */}
           <div className="ygo-forge-control-block">
             <p className="ygo-forge-label">Turn order</p>
@@ -592,7 +643,7 @@ export function YugiohBuilderApp() {
               >
                 <span className="yugioh-turn-icon">⚡</span>
                 <strong>Going First</strong>
-                <small>Board builder. Max combo ceiling.</small>
+                <small>Combo-first setup. Push your strongest opening board.</small>
               </button>
               <button
                 type="button"
@@ -601,7 +652,7 @@ export function YugiohBuilderApp() {
               >
                 <span className="yugioh-turn-icon">💥</span>
                 <strong>Going Second</strong>
-                <small>Board cracker. Breakers + hand traps.</small>
+                <small>Board-breaking plan. More breakers and pressure cards.</small>
               </button>
             </div>
           </div>
@@ -624,14 +675,14 @@ export function YugiohBuilderApp() {
             </div>
           </div>
 
-          {/* Quick rebuilds */}
+          {/* Deck variants */}
           {showQuickRebuilds ? (
             <div className="ygo-forge-control-block">
-              <p className="ygo-forge-label">Quick rebuilds</p>
+              <p className="ygo-forge-label">Deck variants</p>
               <div className="yugioh-rebuild-grid">
-                {quickRebuildOptions.map((option) => (
+                {quickRebuildOptions.map((option, index) => (
                   <button
-                    key={option.id}
+                    key={`${option.id}-${index}`}
                     type="button"
                     className="yugioh-rebuild-card"
                     onClick={() => void applyRebuildOption(option)}
@@ -674,8 +725,8 @@ export function YugiohBuilderApp() {
 
           {totalDeckCards === 0 ? (
             <div className="empty-state-card">
-              <strong>No shell yet</strong>
-              <p className="empty-copy">Pick a theme on the left and hit Generate, or search cards on the right to hand-build.</p>
+              <strong>No deck yet</strong>
+              <p className="empty-copy">Pick a theme on the left and build a deck, or search cards on the right to put one together by hand.</p>
             </div>
           ) : null}
 
@@ -684,28 +735,31 @@ export function YugiohBuilderApp() {
               title="Main Deck"
               section="main"
               entries={main}
-              onAddCopy={addCard}
-              onRemoveCopy={decrementCard}
-              onRemoveCard={removeCard}
-              setHoverPreviewCard={setHoverPreviewCard}
+              onAddCopy={handleAddCard}
+              onRemoveCopy={handleRemoveCopy}
+              onRemoveCard={handleRemoveCard}
+              hoverPreviewCard={hoverPreviewCard}
+              onTogglePreview={togglePreviewCard}
             />
             <DeckSectionPanel
               title="Extra Deck"
               section="extra"
               entries={extra}
-              onAddCopy={addCard}
-              onRemoveCopy={decrementCard}
-              onRemoveCard={removeCard}
-              setHoverPreviewCard={setHoverPreviewCard}
+              onAddCopy={handleAddCard}
+              onRemoveCopy={handleRemoveCopy}
+              onRemoveCard={handleRemoveCard}
+              hoverPreviewCard={hoverPreviewCard}
+              onTogglePreview={togglePreviewCard}
             />
             <DeckSectionPanel
               title="Side Deck"
               section="side"
               entries={side}
-              onAddCopy={addCard}
-              onRemoveCopy={decrementCard}
-              onRemoveCard={removeCard}
-              setHoverPreviewCard={setHoverPreviewCard}
+              onAddCopy={handleAddCard}
+              onRemoveCopy={handleRemoveCopy}
+              onRemoveCard={handleRemoveCard}
+              hoverPreviewCard={hoverPreviewCard}
+              onTogglePreview={togglePreviewCard}
             />
           </div>
         </div>
@@ -724,7 +778,7 @@ export function YugiohBuilderApp() {
                     className={`game-switcher-link ${searchScope === "theme" ? "game-switcher-link-active" : ""}`}
                     onClick={() => setSearchScope("theme")}
                   >
-                    Theme
+                    Archetype
                   </button>
                   <button
                     type="button"
@@ -747,7 +801,6 @@ export function YugiohBuilderApp() {
                 setCardQuery(nextValue);
                 if (nextValue.trim().length < 2) {
                   setCards([]);
-                  setCardAudit([]);
                 }
               }}
             />
@@ -768,15 +821,17 @@ export function YugiohBuilderApp() {
 
                     return (
                       <div key={card.id} className="ygo-compact-card-item">
-                        <div
-                          style={{ cursor: 'pointer', flexShrink: 0, display: 'flex' }}
-                          onMouseEnter={() => setHoverPreviewCard({
-                            name: card.name,
-                            typeLine: card.typeLine,
-                            image: card.images.full || card.images.small || "",
-                            desc: card.desc,
-                          })}
-                          onMouseLeave={() => setHoverPreviewCard(null)}
+                        <button
+                          type="button"
+                          className="ygo-card-preview-trigger"
+                          onClick={() =>
+                            togglePreviewCard({
+                              name: card.name,
+                              typeLine: card.typeLine,
+                              image: card.images.full || card.images.small || "",
+                              desc: card.desc,
+                            })
+                          }
                         >
                           {card.images.small ? (
                             <Image
@@ -790,16 +845,16 @@ export function YugiohBuilderApp() {
                           ) : (
                             <div className="ygo-compact-card-thumb" style={{display: 'grid', placeItems: 'center', fontSize: '10px', color: '#64748b', border: '1px solid rgba(255,255,255,0.1)'}}>No img</div>
                           )}
-                        </div>
+                        </button>
                         <div className="ygo-compact-card-copy">
                           <strong>{card.name}</strong>
                           <small>{card.typeLine}</small>
                         </div>
                         <div className="ygo-compact-card-actions">
-                          <button type="button" className="ygo-filter-chip" style={{padding: '0.2rem 0.5rem', margin: 0}} onClick={() => addCard(card, suggestedSection)}>
+                          <button type="button" className="ygo-filter-chip" style={{padding: '0.2rem 0.5rem', margin: 0}} onClick={() => handleAddCard(card, suggestedSection)}>
                             +{suggestedCopies > 0 ? suggestedCopies : ""}
                           </button>
-                          <button type="button" className="ygo-filter-chip" style={{padding: '0.2rem 0.5rem', margin: 0}} onClick={() => addCard(card, "side")}>
+                          <button type="button" className="ygo-filter-chip" style={{padding: '0.2rem 0.5rem', margin: 0}} onClick={() => handleAddCard(card, "side")}>
                             S{sideCopies > 0 ? sideCopies : ""}
                           </button>
                           <button
@@ -807,7 +862,7 @@ export function YugiohBuilderApp() {
                             className={`ygo-filter-chip ${bossCardSelected ? "tag-pill-active" : ""}`}
                             style={{padding: '0.2rem 0.5rem', margin: 0, background: bossCardSelected ? 'rgba(59, 130, 246, 0.4)' : undefined, color: bossCardSelected ? '#fff' : undefined}}
                             onClick={() => anchorCard(card)}
-                            title="Anchor as boss card"
+                            title="Lock as anchored card"
                           >
                             ⚓
                           </button>
@@ -816,7 +871,6 @@ export function YugiohBuilderApp() {
                     );
                   })}
                 </div>
-                <SourceAuditBlock sourceAudit={cardAudit} />
               </>
             ) : null}
           </div>
@@ -836,33 +890,12 @@ export function YugiohBuilderApp() {
             </div>
           ) : null}
 
-          {/* Warnings + reads */}
-          {totalDeckCards > 0 && (readout.warnings.length > 0 || readout.notes.length > 0) ? (
+          {totalDeckCards > 0 && buildReads.length > 0 ? (
             <div className="ygo-forge-control-block">
-              <p className="ygo-forge-label">Reads</p>
-              <div className="yugioh-signal-list">
-                {readout.warnings.map((warning) => (
-                  <article key={warning} className="summary-card yugioh-signal-card yugioh-signal-card-warn">
-                    <strong>⚠</strong>
-                    <p className="empty-copy">{warning}</p>
-                  </article>
-                ))}
-                {readout.notes.map((note) => (
-                  <article key={note} className="summary-card yugioh-signal-card yugioh-signal-card-good">
-                    <p className="empty-copy">{note}</p>
-                  </article>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          {/* Generation notes */}
-          {buildNotes.length > 0 ? (
-            <div className="ygo-forge-control-block">
-              <p className="ygo-forge-label">Generation notes</p>
+              <p className="ygo-forge-label">Deck notes</p>
               <div className="yugioh-note-list">
-                {buildNotes.map((note) => (
-                  <article key={note} className="summary-card yugioh-signal-card yugioh-signal-card-neutral">
+                {buildReads.map((note, index) => (
+                  <article key={`${note}-${index}`} className="summary-card yugioh-signal-card yugioh-signal-card-neutral">
                     <p className="empty-copy">{note}</p>
                   </article>
                 ))}
@@ -873,10 +906,10 @@ export function YugiohBuilderApp() {
           {/* Meta field */}
           {metaSnapshot ? (
             <div className="ygo-forge-control-block">
-              <p className="ygo-forge-label">Meta field — {metaSnapshot.matchedDeckCount} matched</p>
+              <p className="ygo-forge-label">Meta field — {metaSnapshot.matchedDeckCount} lists matched</p>
               <div className="yugioh-meta-chip-grid">
-                {metaSnapshot.topFieldDecks.map((entry) => (
-                  <article key={entry.name} className="summary-card yugioh-meta-chip">
+                {metaSnapshot.topFieldDecks.map((entry, index) => (
+                  <article key={`${entry.name}-${index}`} className="summary-card yugioh-meta-chip">
                     <strong>{entry.name}</strong>
                     <small>{entry.count} lists</small>
                   </article>
@@ -884,9 +917,9 @@ export function YugiohBuilderApp() {
               </div>
               {metaSnapshot.matchedDecks.length > 0 ? (
                 <div className="yugioh-sample-list" style={{ marginTop: '0.5rem' }}>
-                  {metaSnapshot.matchedDecks.slice(0, 4).map((deck) => (
+                  {metaSnapshot.matchedDecks.slice(0, 4).map((deck, index) => (
                     <a
-                      key={deck.deckUrl}
+                      key={`${deck.deckUrl}-${index}`}
                       href={deck.deckUrl}
                       target="_blank"
                       rel="noreferrer"
@@ -901,15 +934,15 @@ export function YugiohBuilderApp() {
             </div>
           ) : null}
 
-          <SourceAuditBlock sourceAudit={sourceAudit} />
         </div>
       </div>
 
-      {/* Hover overlay */}
+      {toastMessage ? <div className="ygo-toast" aria-live="polite">{toastMessage}</div> : null}
+
+      {/* Card preview */}
       {hoverPreviewCard?.image ? (
-        <div className="deck-preview-overlay" aria-hidden="true" style={{ zIndex: 100 }}>
-          <div className="deck-preview-scrim" />
-          <div className="deck-preview-frame">
+        <div className="ygo-floating-preview" aria-live="polite">
+          <div className="ygo-floating-preview-card">
             <Image
               src={hoverPreviewCard.image}
               alt={hoverPreviewCard.name}
