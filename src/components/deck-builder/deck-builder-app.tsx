@@ -2,11 +2,19 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useDeferredValue, useEffect, useMemo, useState, useTransition } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 import { colorIdentityKey, formatColorIdentity, ORDERED_COLORS } from "@/lib/mtg/colors";
 import { validateDeck } from "@/lib/mtg/deck-builder";
 import { deriveCommanderMechanics } from "@/lib/mtg/mechanics";
+import {
+  README_MTG_BUILD_NOTES,
+  README_MTG_COMMANDER,
+  README_MTG_ENTRIES,
+  README_MTG_FOCUS_TAG,
+  README_MTG_POWER,
+  README_MTG_SPELLBOOK,
+} from "@/lib/demo/readme-snapshots";
 import type {
   CardSummary,
   CommanderMeta,
@@ -21,6 +29,7 @@ import { useMtgStore } from "@/store/mtg-store";
 
 type DeckBuilderAppProps = {
   initialBannedList: string[];
+  demo?: boolean;
 };
 
 type HoverPreviewCard = {
@@ -78,7 +87,7 @@ function roleLabel(role: DeckEntry["role"]) {
   }
 }
 
-export function DeckBuilderApp({ initialBannedList }: DeckBuilderAppProps) {
+export function DeckBuilderApp({ initialBannedList, demo = false }: DeckBuilderAppProps) {
   const {
     selectedCommander,
     focusTag,
@@ -112,6 +121,25 @@ export function DeckBuilderApp({ initialBannedList }: DeckBuilderAppProps) {
   const [isLoadingCommanderMeta, setIsLoadingCommanderMeta] = useState(false);
   const [isSearchingCards, setIsSearchingCards] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const demoAppliedRef = useRef(false);
+
+  useEffect(() => {
+    if (!demo || demoAppliedRef.current) {
+      return;
+    }
+
+    demoAppliedRef.current = true;
+    setGeneratedDeck({
+      commander: README_MTG_COMMANDER,
+      focusTag: README_MTG_FOCUS_TAG,
+      powerPreset: README_MTG_POWER,
+      entries: README_MTG_ENTRIES,
+      buildNotes: README_MTG_BUILD_NOTES,
+      spellbookEstimate: README_MTG_SPELLBOOK,
+    });
+    setCommanderQuery(README_MTG_COMMANDER.name);
+    setCardQuery("Ephemerate");
+  }, [demo, setGeneratedDeck]);
 
   useEffect(() => {
     if (!selectedCommander) {

@@ -12,6 +12,10 @@ import {
   inferDeckSection,
   YUGIOH_STRENGTH_OPTIONS,
 } from "@/lib/games/yugioh/builder-shell";
+import {
+  README_YGO_GENERATED,
+  README_YGO_THEME,
+} from "@/lib/demo/readme-snapshots";
 import type {
   YugiohArchetype,
   YugiohArchetypeSearchResponse,
@@ -157,7 +161,7 @@ function DeckSectionPanel({
   );
 }
 
-export function YugiohBuilderApp() {
+export function YugiohBuilderApp({ demo = false }: { demo?: boolean }) {
   const {
     strengthTarget,
     turnPreference,
@@ -187,7 +191,9 @@ export function YugiohBuilderApp() {
     decrementCard,
     removeCard,
     clearDeck,
+    clearAll,
   } = useYugiohStore();
+  
 
   const [archetypeQuery, setArchetypeQuery] = useState(theme?.resolvedArchetype ?? theme?.query ?? "");
   const [cardQuery, setCardQuery] = useState("");
@@ -201,9 +207,49 @@ export function YugiohBuilderApp() {
   const [hoverPreviewCard, setHoverPreviewCard] = useState<HoverPreviewCard | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const demoAppliedRef = useRef(false);
   
   const showArchetypeResults = deferredArchetypeQuery.trim().length >= 2;
   const showCardResults = deferredCardQuery.trim().length >= 2;
+
+  useEffect(() => {
+    if (!demo || demoAppliedRef.current) {
+      return;
+    }
+
+    demoAppliedRef.current = true;
+    clearAll();
+    setThemeQuery(README_YGO_THEME.query);
+    for (const themeName of README_YGO_THEME.resolvedSupportCards) {
+      addThemeAnchor(themeName);
+    }
+    for (const bossName of README_YGO_THEME.resolvedBossCards) {
+      const card = [...README_YGO_GENERATED.main, ...README_YGO_GENERATED.extra, ...README_YGO_GENERATED.side]
+        .map((entry) => entry.card)
+        .find((entryCard) => entryCard.name === bossName);
+
+      if (card) {
+        toggleBossCard(card);
+      }
+    }
+    for (const inactiveThemeName of README_YGO_THEME.inactiveSupportCards) {
+      addThemeAnchor(inactiveThemeName);
+      toggleThemeAnchorActive(inactiveThemeName);
+    }
+    setGeneratedDeck(README_YGO_GENERATED);
+    setSelectedDeckVersion(README_YGO_GENERATED.metaSnapshot.selectedDeckVersion);
+    setArchetypeQuery(README_YGO_THEME.query);
+    setCardQuery("Yubel");
+  }, [
+    addThemeAnchor,
+    clearAll,
+    demo,
+    setGeneratedDeck,
+    setSelectedDeckVersion,
+    setThemeQuery,
+    toggleBossCard,
+    toggleThemeAnchorActive,
+  ]);
 
   useEffect(() => {
     if (!showArchetypeResults) {
